@@ -4,4 +4,6 @@ project(CXXTerminal)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set(SOURCE_FILES main.cpp include/Terminal.h src/Terminal.cpp)
+
+link_libraries(pthread)
 add_executable(CXXTerminal ${SOURCE_FILES})

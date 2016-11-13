@@ -31,12 +31,63 @@
 #define ANSI_RESET            "\x1B[0m"
 
 #include <string>
+#include <vector>
+#include <functional>
+
+class Terminal;
+struct ReaderThreadArgs {
+    Terminal** handlePtr;
+    std::function<int(void)> readFunction;
+    std::function<void(int)> readedFunction;
+};
+
 
 class Terminal {
     public:
         static void setup();
+        static void uninstall();
+
         static Terminal* getInstance();
 
+        void redrawLine(bool lockMutex = true);
+
+        void writeMessage(std::string message, bool noCharacterCodes = false);
+
+        int linesAvariable();
+        std::string readLine();
+        std::string readLine(std::string promt);
+        std::string readLine(std::string promt, int timeout);
+
+        std::vector<std::string>& getBufferedLines();
+
+        std::string getCursorBuffer();
+
+        void setPromt(std::string promt);
+        std::string& getPromt(){
+            return this->promt;
+        }
+    private:
+        std::string parseCharacterCodes(std::string in);
+
+        void printCommand(std::string command);
+
+        int readNextByte();
+        void charReaded(int character);
+
+        int startReader();
+        int stopReader();
+
+        std::string getNextLine();
+        pthread_mutex_t readlineMutex = PTHREAD_MUTEX_INITIALIZER;
+        pthread_mutex_t bufferMutex = PTHREAD_MUTEX_INITIALIZER;
+        pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+        pthread_t* readerThread = nullptr;
+
+        std::vector<std::string> lineBuffer;
+
+        std::string promt = "";
+        int cursorPosition = 0;
+        std::vector<char> cursorBuffer;
 };
 
 #endif //CXXTERMINAL_TERMINAL_H
