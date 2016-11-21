@@ -3,6 +3,7 @@
 //
 
 #include "../include/Terminal.h"
+#include "../include/QuickTerminal.h"
 
 #include <sstream>
 #include <iostream>
@@ -13,6 +14,24 @@
 #include <algorithm>
 #include <sys/time.h>
 
+
+/**
+ * Quick terminal for instand access
+ */
+
+void writeMessage(std::string message){
+    if(Terminal::isActive())
+        Terminal::getInstance()->writeMessage(message);
+    else
+        (std::cout << message << std::endl).flush();
+}
+bool isTerminalEnabled(){
+    return Terminal::isActive();
+}
+
+/**
+ * Terminal class
+ */
 struct termios orig_termios;
 Terminal* terminalInstance = nullptr;
 
@@ -245,6 +264,10 @@ std::string join(std::vector<T> elm,JoinFunction<T> toStringFunc){
     return out.str().length() > 2 ? out.str().substr(2) : out.str();
 }
 
+JoinFunction<std::string> joinStrings = [](std::string elm){
+    return elm;
+};
+
 void Terminal::charReaded(int character) {
     if(character == 10){
         pthread_mutex_lock(&(this->bufferMutex));
@@ -269,10 +292,6 @@ void Terminal::charReaded(int character) {
                 std::string lastBuffer = buffer.substr(lastIndex == -1 ? 0 : lastIndex);
                 for(std::vector<TabCompleter*>::iterator it = this->tabCompleters.begin(); it != tabCompleters.end();it++)
                     it.operator*()->operator()(buffer, lastBuffer,this->currentTabComplete);
-
-                JoinFunction<std::string> jf = [](std::string elm){
-                    return elm;
-                };
 
                 if(lastBuffer.find_first_not_of(' ') != -1 && std::find(this->currentTabComplete.begin(), this->currentTabComplete.end(), lastBuffer.substr(1)) == this->currentTabComplete.end())
                     this->currentTabComplete.push_back(lastBuffer.substr(1));
