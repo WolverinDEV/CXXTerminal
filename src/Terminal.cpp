@@ -5,20 +5,12 @@
 #include "../include/Terminal.h"
 
 #include <sstream>
-#include <pthread.h>
 #include <iostream>
-#include <vector>
 #include <unistd.h>
-#include <fcntl.h>
-#include <sstream>
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/select.h>
 #include <termios.h>
-#include <sstream>
 #include <csignal>
-#include <functional>
+#include <algorithm>
 #include <sys/time.h>
 
 struct termios orig_termios;
@@ -78,6 +70,10 @@ void Terminal::uninstall() {
     delete terminalInstance;
     terminalInstance = nullptr;
     removeNonblock();
+}
+
+bool Terminal::isActive() {
+    return terminalInstance != nullptr;
 }
 
 int Terminal::startReader() {
@@ -142,17 +138,13 @@ std::string Terminal::parseCharacterCodes(std::string in) {
             std::string first = (*it).substr(0,1);
             switch (tolower(first[0])){
                 case '0':
-                    stream << ANSI_BLACK;
-                    break;
+                    stream << ANSI_BLACK; break;
                 case '1':
-                    stream << ANSI_BLUE;
-                    break;
+                    stream << ANSI_BLUE; break;
                 case '2':
-                    stream << ANSI_GREEN;
-                    break;
+                    stream << ANSI_GREEN; break;
                 case '3':
-                    stream << ANSI_CYAN;
-                    break;
+                    stream << ANSI_CYAN; break;
                 case '4':
                     stream << ANSI_RED; break;
                 case '5':
@@ -184,11 +176,9 @@ std::string Terminal::parseCharacterCodes(std::string in) {
                 case 'o':
                     break;
                 case 'l':
-                    stream << ANSI_BOLD;
-                    break;
+                    stream << ANSI_BOLD; break;
                 case 'r':
-                    stream << ANSI_RESET;
-                    break;
+                    stream << ANSI_RESET; break;
                 default:
                     stream << "§";
                     index = 0;
@@ -244,23 +234,82 @@ void Terminal::writeMessage(std::string message, bool noCharacterCodes) {
     pthread_mutex_unlock(&mutex);
 }
 
+template <typename T>
+using JoinFunction = std::function<std::string(T)>;
+
+template <typename T>
+std::string join(std::vector<T> elm,JoinFunction<T> toStringFunc){
+    std::stringstream out;
+    for(auto it = elm.begin();it != elm.end();it++)
+        out << ", " << toStringFunc(*it);
+    return out.str().length() > 2 ? out.str().substr(2) : out.str();
+}
+
 void Terminal::charReaded(int character) {
     if(character == 10){
-        //std::cout << "Having line character: " << std::endl;
         pthread_mutex_lock(&(this->bufferMutex));
-        lineBuffer.push_back(std::string(&(cursorBuffer[0]), cursorBuffer.size()));
+        std::string line = std::string(&(cursorBuffer[0]), cursorBuffer.size());
+        lineBuffer.push_back(line);
+        commandHistory.push_back(line);
+        while (commandHistory.size() > HISTORY_LINE_BUFFER_SIZE){
+            commandHistory.erase(commandHistory.begin());
+        }
+        this->historyIndex = 0;
+
         pthread_mutex_unlock(&(this->bufferMutex));
         cursorBuffer.clear();
         cursorPosition = 0;
         redrawLine();
     } else if(character == 9){
-        writeMessage("Tab char");
+        if(newInputTyped){
+            if(this->cursorPosition == this->cursorBuffer.size()){
+                this->currentTabComplete.clear();
+                std::string buffer = getCursorBuffer();
+                int lastIndex = buffer.find_last_of(' ');
+                std::string lastBuffer = buffer.substr(lastIndex == -1 ? 0 : lastIndex);
+                for(std::vector<TabCompleter*>::iterator it = this->tabCompleters.begin(); it != tabCompleters.end();it++)
+                    it.operator*()->operator()(buffer, lastBuffer,this->currentTabComplete);
+
+                JoinFunction<std::string> jf = [](std::string elm){
+                    return elm;
+                };
+
+                if(lastBuffer.find_first_not_of(' ') != -1 && std::find(this->currentTabComplete.begin(), this->currentTabComplete.end(), lastBuffer.substr(1)) == this->currentTabComplete.end())
+                    this->currentTabComplete.push_back(lastBuffer.substr(1));
+                if(this->currentTabComplete.size() > 0){
+                    setCursorBuffer(buffer.substr(0, lastIndex == -1 ? 0 : lastIndex) + " " + this->currentTabComplete[0]);
+                    this->tabCompleteIndex = 0;
+                } else
+                    this->tabCompleteIndex = -1;
+                newInputTyped = false;
+            }
+            else {
+                int next;
+                if(this->cursorBuffer.size() > this->cursorPosition + 1)
+                    next = getCursorBuffer().find_first_of(' ', this->cursorPosition + 1);
+                else
+                    next = -1;
+                setCursorPosition(next == -1 ? this->cursorBuffer.size() : next);
+                redrawLine(false);
+            }
+        } else {
+            if(this->tabCompleteIndex < 0)
+                return;
+            this->tabCompleteIndex++;
+            if(this->currentTabComplete.size() <= this->tabCompleteIndex)
+                this->tabCompleteIndex = 0;
+            std::string fullBuffer = this->getCursorBuffer();
+            int lastIndex = fullBuffer.find_last_of(' ');
+            setCursorBuffer(fullBuffer.substr(0, lastIndex == -1 ? 0 : lastIndex) + " " + this->currentTabComplete[this->tabCompleteIndex]);
+        }
+
     } else if(character == 27){
         int category = readNextByte();
         int type = readNextByte();
-        //printMessage("Special char. Group: "+to_string(category)+ " type: "+to_string(type));
+        writeMessage("Special char. Group: "+std::to_string(category)+ " type: "+std::to_string(type));
 
         if(category == 91){ //Arrow keys
+            newInputTyped = true;
             if(type == 68){
                 if(cursorPosition > 0){
                     this->printCommand("1D");
@@ -271,6 +320,19 @@ void Terminal::charReaded(int character) {
                     this->printCommand("1C");
                     this->cursorPosition++;
                 } else return;
+            } else if(type == 65){ //Arow up
+                if(this->historyIndex < this->commandHistory.size()){
+                    this->historyIndex++;
+                    this->setCursorBuffer(this->commandHistory[this->commandHistory.size()-historyIndex]); //Invert
+                }
+            } else if(type == 66){ //Arow down
+                if(this->historyIndex > 0){
+                    this->historyIndex--;
+                    if(this->historyIndex == 0)
+                        this->setCursorBuffer("");
+                    else
+                        this->setCursorBuffer(this->commandHistory[this->commandHistory.size()-historyIndex]); //Invert
+                }
             }
             //printMessage("New cursor position: "+to_string(cursorPosition));
         }
@@ -292,6 +354,7 @@ void Terminal::charReaded(int character) {
     } else {
         //printMessage("having character: "+to_string(character)+" curso position: "+to_string(cursorPosition)+" buffersize: "+to_string(cursorBuffer.size()));
         if(isprint(character)){
+            newInputTyped = true;
             if(cursorPosition < cursorBuffer.size()){
                 cursorBuffer.insert(cursorBuffer.begin()+cursorPosition, character);
             }
@@ -360,4 +423,52 @@ std::string Terminal::readLine(std::string promt, int timeout) {
 
 std::string Terminal::getCursorBuffer() {
     return std::string(&(this->cursorBuffer[0]), cursorBuffer.size());
+}
+
+void Terminal::setCursorBuffer(std::string buffer) {
+    pthread_mutex_lock(&(this->bufferMutex));
+    int oldSize = this->cursorBuffer.size();
+    this->cursorBuffer.clear();
+    for(int i = 0;i<buffer.length();i++)
+        this->cursorBuffer.push_back(buffer[i]);
+    int move = this->cursorBuffer.size() - oldSize;
+    /*
+    if(move < 0){
+        std::cout << "\x1B[" + std::to_string(-move)+"D";
+        std::cout.flush();
+    } else {
+        std::cout << "\x1B[" + std::to_string(move)+"C";
+        std::cout.flush();
+    }
+    */
+    this->cursorPosition += move;
+    this->redrawLine(false);
+    pthread_mutex_unlock(&(this->bufferMutex));
+}
+
+int Terminal::getCursorPosition() {
+    return this->cursorPosition;
+}
+
+void Terminal::setCursorPosition(int index) { //TODO bounds check!
+    int move = index - this->cursorPosition ;
+    if(move < 0){
+        std::cout << "\x1B[" + std::to_string(-move)+"D";
+        std::cout.flush();
+    } else {
+        std::cout << "\x1B[" + std::to_string(move)+"C";
+        std::cout.flush();
+    }
+    this->cursorPosition = index;
+}
+
+void Terminal::addTabCompleter(TabCompleter* tabCompleter) {
+    tabCompleters.push_back(tabCompleter);
+}
+
+void Terminal::removeTabCompleter(TabCompleter* tabCompleter) {
+    auto it = std::find(tabCompleters.begin(),tabCompleters.end(), tabCompleter);
+    for(;it != tabCompleters.end();it++)
+        tabCompleters.erase(it);
+
 }

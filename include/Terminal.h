@@ -30,6 +30,8 @@
 #define ANSI_INVISIABLE       "\x1B[8m"
 #define ANSI_RESET            "\x1B[0m"
 
+#define HISTORY_LINE_BUFFER_SIZE (int) 100
+
 #include <string>
 #include <vector>
 #include <functional>
@@ -41,11 +43,16 @@ struct ReaderThreadArgs {
     std::function<void(int)> readedFunction;
 };
 
+/**
+ *  void(string full_line, string lastArgument, vector avariable)
+ */
+typedef std::function<void(std::string, std::string, std::vector<std::string>&)> TabCompleter;
 
 class Terminal {
     public:
         static void setup();
         static void uninstall();
+        static bool isActive();
 
         static Terminal* getInstance();
 
@@ -61,11 +68,18 @@ class Terminal {
         std::vector<std::string>& getBufferedLines();
 
         std::string getCursorBuffer();
+        void setCursorBuffer(std::string);
+
+        int getCursorPosition();
+        void setCursorPosition(int index);
 
         void setPromt(std::string promt);
         std::string& getPromt(){
             return this->promt;
         }
+
+        void addTabCompleter(TabCompleter* tabCompleter);
+        void removeTabCompleter(TabCompleter* tabCompleter);
     private:
         std::string parseCharacterCodes(std::string in);
 
@@ -88,6 +102,15 @@ class Terminal {
         std::string promt = "";
         int cursorPosition = 0;
         std::vector<char> cursorBuffer;
+
+        bool newInputTyped = false;
+
+        std::vector<TabCompleter*> tabCompleters;
+        std::vector<std::string> currentTabComplete;
+        int tabCompleteIndex = 0;
+
+        std::vector<std::string> commandHistory;
+        int historyIndex = 0;
 };
 
 #endif //CXXTERMINAL_TERMINAL_H
