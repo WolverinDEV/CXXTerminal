@@ -306,7 +306,7 @@ void Terminal::charReaded(int character) {
     } else if(character == 27){
         int category = readNextByte();
         int type = readNextByte();
-        writeMessage("Special char. Group: "+std::to_string(category)+ " type: "+std::to_string(type));
+        //writeMessage("Special char. Group: "+std::to_string(category)+ " type: "+std::to_string(type));
 
         if(category == 91){ //Arrow keys
             newInputTyped = true;
