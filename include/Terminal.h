@@ -36,81 +36,96 @@
 #include <vector>
 #include <functional>
 
-class Terminal;
-struct ReaderThreadArgs {
-    Terminal** handlePtr;
-    std::function<int(void)> readFunction;
-    std::function<void(int)> readedFunction;
-};
-
 /**
  *  void(string full_line, string lastArgument, vector avariable)
  */
-typedef std::function<void(std::string, std::string, std::vector<std::string>&)> TabCompleter;
 
-class Terminal {
-    public:
-        static void setup();
-        static void uninstall();
-        static bool isActive();
+namespace Terminal {
+        typedef std::function<void(std::string, std::string, std::vector<std::string> &)> TabCompleter;
 
-        static Terminal* getInstance();
+        class TerminalImpl;
+        struct ReaderThreadArgs {
+            TerminalImpl** handlePtr;
+            std::function<int(void)> readFunction;
+            std::function<void(int)> readedFunction;
+        };
 
-        void redrawLine(bool lockMutex = true);
+        extern void setup();
 
-        void writeMessage(std::string message, bool noCharacterCodes = false);
+        extern void uninstall();
 
-        int linesAvariable();
-        std::string readLine();
-        std::string readLine(std::string promt);
-        std::string readLine(std::string promt, int timeout);
+        extern bool isActive();
 
-        std::vector<std::string>& getBufferedLines();
+        extern TerminalImpl* getInstance();
 
-        std::string getCursorBuffer();
-        void setCursorBuffer(std::string);
+        class TerminalImpl {
+            public:
+                void redrawLine(bool lockMutex = true);
 
-        int getCursorPosition();
-        void setCursorPosition(int index);
+                void writeMessage(std::string message, bool noCharacterCodes = false);
 
-        void setPromt(std::string promt);
-        std::string& getPromt(){
-            return this->promt;
-        }
+                int linesAvariable();
 
-        void addTabCompleter(TabCompleter* tabCompleter);
-        void removeTabCompleter(TabCompleter* tabCompleter);
-    private:
-        std::string parseCharacterCodes(std::string in);
+                std::string readLine();
 
-        void printCommand(std::string command);
+                std::string readLine(std::string promt);
 
-        int readNextByte();
-        void charReaded(int character);
+                std::string readLine(std::string promt, int timeout);
 
-        int startReader();
-        int stopReader();
+                std::vector<std::string> &getBufferedLines();
 
-        std::string getNextLine();
-        pthread_mutex_t readlineMutex = PTHREAD_MUTEX_INITIALIZER;
-        pthread_mutex_t bufferMutex = PTHREAD_MUTEX_INITIALIZER;
-        pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-        pthread_t* readerThread = nullptr;
+                std::string getCursorBuffer();
 
-        std::vector<std::string> lineBuffer;
+                void setCursorBuffer(std::string);
 
-        std::string promt = "";
-        int cursorPosition = 0;
-        std::vector<char> cursorBuffer;
+                int getCursorPosition();
 
-        bool newInputTyped = false;
+                void setCursorPosition(int index);
 
-        std::vector<TabCompleter*> tabCompleters;
-        std::vector<std::string> currentTabComplete;
-        int tabCompleteIndex = 0;
+                void setPromt(std::string promt);
 
-        std::vector<std::string> commandHistory;
-        int historyIndex = 0;
-};
+                std::string &getPromt() {
+                    return this->promt;
+                }
+
+                void addTabCompleter(TabCompleter *tabCompleter);
+
+                void removeTabCompleter(TabCompleter *tabCompleter);
+
+                int startReader();
+
+                int stopReader();
+            private:
+                std::string parseCharacterCodes(std::string in);
+
+                void printCommand(std::string command);
+
+                int readNextByte();
+
+                void charReaded(int character);
+
+                std::string getNextLine();
+
+                pthread_mutex_t readlineMutex = PTHREAD_MUTEX_INITIALIZER;
+                pthread_mutex_t bufferMutex = PTHREAD_MUTEX_INITIALIZER;
+                pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+                pthread_t *readerThread = nullptr;
+
+                std::vector<std::string> lineBuffer;
+
+                std::string promt = "";
+                int cursorPosition = 0;
+                std::vector<char> cursorBuffer;
+
+                bool newInputTyped = false;
+
+                std::vector<TabCompleter *> tabCompleters;
+                std::vector<std::string> currentTabComplete;
+                int tabCompleteIndex = 0;
+
+                std::vector<std::string> commandHistory;
+                int historyIndex = 0;
+        };
+}
 
 #endif //CXXTERMINAL_TERMINAL_H

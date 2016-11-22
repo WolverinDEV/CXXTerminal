@@ -15,7 +15,7 @@ file(GLOB TEST test/*)
 
 
 # Create shared library
-add_library(${PROJECT_NAME} SHARED ${SOURCES} test/Main.cpp include/QuickTerminal.h)
+add_library(${PROJECT_NAME} SHARED ${SOURCES} test/Main.cpp include/QuickTerminal.h include/AdvancedTabCompleter.h src/TabCompleter.cpp)
 # Install library
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
 install(FILES ${HEADERS} DESTINATION include/${PROJECT_NAME})

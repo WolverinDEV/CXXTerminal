@@ -32,11 +32,13 @@ bool isTerminalEnabled(){
 /**
  * Terminal class
  */
+using namespace Terminal;
+
 struct termios orig_termios;
-Terminal* terminalInstance = nullptr;
+TerminalImpl* terminalInstance = nullptr;
 
 
-Terminal* Terminal::getInstance() {
+Terminal::TerminalImpl* Terminal::getInstance() {
     return terminalInstance;
 }
 
@@ -79,7 +81,7 @@ void* terminalReaderThread(void* args){
 }
 
 void Terminal::setup() {
-    terminalInstance = new Terminal;
+    terminalInstance = new TerminalImpl;
     initNonblock();
     terminalInstance->startReader();
 }
@@ -95,7 +97,7 @@ bool Terminal::isActive() {
     return terminalInstance != nullptr;
 }
 
-int Terminal::startReader() {
+int TerminalImpl::startReader() {
     if(this->readerThread == nullptr){
         this->readerThread = new pthread_t;
 
@@ -114,7 +116,7 @@ int Terminal::startReader() {
     return -1;
 }
 
-int Terminal::stopReader() {
+int TerminalImpl::stopReader() {
     if(this->readerThread != nullptr){
         pthread_cancel(*(this->readerThread));
         delete(this->readerThread);
@@ -124,7 +126,7 @@ int Terminal::stopReader() {
     return -1;
 }
 
-int Terminal::readNextByte() {
+int TerminalImpl::readNextByte() {
     int readed;
     while ((readed = getchar()) < 1){
         usleep(1000);
@@ -144,7 +146,7 @@ inline void split(const std::string &s, std::string delim, std::vector<std::stri
     elems.push_back(s.substr(start, end - start));
 }
 
-std::string Terminal::parseCharacterCodes(std::string in) {
+std::string TerminalImpl::parseCharacterCodes(std::string in) {
     std::stringstream stream;
     std::vector<std::string> parts;
     split(in, "§", parts);
@@ -211,17 +213,17 @@ std::string Terminal::parseCharacterCodes(std::string in) {
     return stream.str();
 }
 
-void Terminal::printCommand(std::string command) {
+void TerminalImpl::printCommand(std::string command) {
     std::cout << "\x1B[" << command;
     std::cout.flush();
 }
 
-void Terminal::setPromt(std::string promt) {
+void TerminalImpl::setPromt(std::string promt) {
     this->promt = promt;
     this->redrawLine();
 }
 
-void Terminal::redrawLine(bool lockMutex) {
+void TerminalImpl::redrawLine(bool lockMutex) {
     if(lockMutex)
         pthread_mutex_lock(&(this->mutex));
     std::stringstream ss;
@@ -243,7 +245,7 @@ void Terminal::redrawLine(bool lockMutex) {
         pthread_mutex_unlock(&(this->mutex));
 }
 
-void Terminal::writeMessage(std::string message, bool noCharacterCodes) {
+void TerminalImpl::writeMessage(std::string message, bool noCharacterCodes) {
     pthread_mutex_lock(&mutex);
     if(!noCharacterCodes)
         std::cout << ANSI_RESET"\r" << parseCharacterCodes(message) << "\x1B[K" << std::endl;
@@ -268,7 +270,7 @@ JoinFunction<std::string> joinStrings = [](std::string elm){
     return elm;
 };
 
-void Terminal::charReaded(int character) {
+void TerminalImpl::charReaded(int character) {
     if(character == 10){
         pthread_mutex_lock(&(this->bufferMutex));
         std::string line = std::string(&(cursorBuffer[0]), cursorBuffer.size());
@@ -285,22 +287,26 @@ void Terminal::charReaded(int character) {
         redrawLine();
     } else if(character == 9){
         if(newInputTyped){
+            int inc = 0;
             if(this->cursorPosition == this->cursorBuffer.size()){
                 this->currentTabComplete.clear();
                 std::string buffer = getCursorBuffer();
                 int lastIndex = buffer.find_last_of(' ');
-                std::string lastBuffer = buffer.substr(lastIndex == -1 ? 0 : lastIndex);
+                std::string lastBuffer = buffer.substr(lastIndex == -1 ? 0 : lastIndex + 1);
                 for(std::vector<TabCompleter*>::iterator it = this->tabCompleters.begin(); it != tabCompleters.end();it++)
                     it.operator*()->operator()(buffer, lastBuffer,this->currentTabComplete);
 
                 if(lastBuffer.find_first_not_of(' ') != -1 && std::find(this->currentTabComplete.begin(), this->currentTabComplete.end(), lastBuffer.substr(1)) == this->currentTabComplete.end())
-                    this->currentTabComplete.push_back(lastBuffer.substr(1));
+                    this->currentTabComplete.push_back(lastBuffer);
+                else
+                    inc++;
+
                 if(this->currentTabComplete.size() > 0){
-                    setCursorBuffer(buffer.substr(0, lastIndex == -1 ? 0 : lastIndex) + " " + this->currentTabComplete[0]);
+                    setCursorBuffer(buffer.substr(0, lastIndex == -1 ? 0 : lastIndex)  + (lastIndex == -1 ? "" : " ") + this->currentTabComplete[0]);
                     this->tabCompleteIndex = 0;
                 } else
                     this->tabCompleteIndex = -1;
-                newInputTyped = false;
+                newInputTyped = this->currentTabComplete.size() + inc < 3; //DOnt need a circle
             }
             else {
                 int next;
@@ -319,7 +325,7 @@ void Terminal::charReaded(int character) {
                 this->tabCompleteIndex = 0;
             std::string fullBuffer = this->getCursorBuffer();
             int lastIndex = fullBuffer.find_last_of(' ');
-            setCursorBuffer(fullBuffer.substr(0, lastIndex == -1 ? 0 : lastIndex) + " " + this->currentTabComplete[this->tabCompleteIndex]);
+            setCursorBuffer(fullBuffer.substr(0, lastIndex == -1 ? 0 : lastIndex) + (lastIndex == -1 ? "" : " ") + this->currentTabComplete[this->tabCompleteIndex]);
         }
 
     } else if(character == 27){
@@ -393,7 +399,7 @@ inline uint64_t getCurrentTimeMillis(){
     return ms / 1000;
 }
 
-std::string Terminal::getNextLine(){
+std::string TerminalImpl::getNextLine(){
     pthread_mutex_lock(&(this->bufferMutex));
     int size = this->lineBuffer.size();
     if(size > 0){
@@ -406,22 +412,22 @@ std::string Terminal::getNextLine(){
     return "";
 }
 
-int Terminal::linesAvariable() {
+int TerminalImpl::linesAvariable() {
     pthread_mutex_lock(&(this->bufferMutex));
     int size = this->lineBuffer.size();
     pthread_mutex_unlock(&(this->bufferMutex));
     return size;
 }
 
-std::string Terminal::readLine() {
-    return Terminal::readLine("");
+std::string TerminalImpl::readLine() {
+    return TerminalImpl::readLine("");
 }
 
-std::string Terminal::readLine(std::string promt) {
-    return Terminal::readLine(promt, -1);
+std::string TerminalImpl::readLine(std::string promt) {
+    return TerminalImpl::readLine(promt, -1);
 }
 
-std::string Terminal::readLine(std::string promt, int timeout) {
+std::string TerminalImpl::readLine(std::string promt, int timeout) {
     uint64_t current = getCurrentTimeMillis();
     if(timeout > 0){
         timespec spec = {timeout / 1000, (timeout % 1000) * 1000};
@@ -440,11 +446,11 @@ std::string Terminal::readLine(std::string promt, int timeout) {
     return currentLine;
 }
 
-std::string Terminal::getCursorBuffer() {
+std::string TerminalImpl::getCursorBuffer() {
     return std::string(&(this->cursorBuffer[0]), cursorBuffer.size());
 }
 
-void Terminal::setCursorBuffer(std::string buffer) {
+void TerminalImpl::setCursorBuffer(std::string buffer) {
     pthread_mutex_lock(&(this->bufferMutex));
     int oldSize = this->cursorBuffer.size();
     this->cursorBuffer.clear();
@@ -465,11 +471,11 @@ void Terminal::setCursorBuffer(std::string buffer) {
     pthread_mutex_unlock(&(this->bufferMutex));
 }
 
-int Terminal::getCursorPosition() {
+int TerminalImpl::getCursorPosition() {
     return this->cursorPosition;
 }
 
-void Terminal::setCursorPosition(int index) { //TODO bounds check!
+void TerminalImpl::setCursorPosition(int index) { //TODO bounds check!
     int move = index - this->cursorPosition ;
     if(move < 0){
         std::cout << "\x1B[" + std::to_string(-move)+"D";
@@ -481,11 +487,11 @@ void Terminal::setCursorPosition(int index) { //TODO bounds check!
     this->cursorPosition = index;
 }
 
-void Terminal::addTabCompleter(TabCompleter* tabCompleter) {
+void TerminalImpl::addTabCompleter(TabCompleter* tabCompleter) {
     tabCompleters.push_back(tabCompleter);
 }
 
-void Terminal::removeTabCompleter(TabCompleter* tabCompleter) {
+void TerminalImpl::removeTabCompleter(TabCompleter* tabCompleter) {
     auto it = std::find(tabCompleters.begin(),tabCompleters.end(), tabCompleter);
     for(;it != tabCompleters.end();it++)
         tabCompleters.erase(it);
