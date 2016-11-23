@@ -296,6 +296,9 @@ void TerminalImpl::charReaded(int character) {
                 for(std::vector<TabCompleter*>::iterator it = this->tabCompleters.begin(); it != tabCompleters.end();it++)
                     it.operator*()->operator()(buffer, lastBuffer,this->currentTabComplete);
 
+                std::string suggested = join(this->currentTabComplete, joinStrings);
+                if(suggested.size() != 0)
+                    writeMessage(suggested);
                 if(lastBuffer.find_first_not_of(' ') != -1 && std::find(this->currentTabComplete.begin(), this->currentTabComplete.end(), lastBuffer.substr(1)) == this->currentTabComplete.end())
                     this->currentTabComplete.push_back(lastBuffer);
                 else
@@ -373,7 +376,7 @@ void TerminalImpl::charReaded(int character) {
         if(cursorPosition > 0){
             cursorPosition--;
             cursorBuffer.erase(cursorBuffer.begin()+cursorPosition);
-            //cursorBuffer.erase(cursorBuffer.begin()+(cursorPosition), cursorBuffer.begin()+(cursorPosition+1));
+            this->newInputTyped = true;
             redrawLine();
         } else return;
     } else {

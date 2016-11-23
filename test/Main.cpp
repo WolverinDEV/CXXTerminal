@@ -4,13 +4,26 @@
 
 #include <string>
 #include <algorithm>
-#include <typeinfo>
 #include <iostream>
+#include <iomanip>
 #include <unistd.h>
 #include "../include/QuickTerminal.h"
 #include "../include/AdvancedTabCompleter.h"
 
 using namespace std;
+
+string getDate(){
+    time_t rawtime;
+    struct tm * timeinfo;
+    char buffer[80];
+
+    time (&rawtime);
+    timeinfo = localtime(&rawtime);
+
+    strftime(buffer,80,"%d-%m-%Y %I:%M:%S",timeinfo);
+    std::string str(buffer);
+    return str;
+}
 
 void handleLine(std::string& message){
     string lmessage = string(message);
@@ -48,7 +61,9 @@ int main(int argsSize, char** args){
         }
 
         std::string stime = to_string(time);
-        Terminal::getInstance()->setPromt("["+string(time > 10*1000 ? time > 30*1000 ? ANSI_RED : ANSI_BROWN : ANSI_GREEN)+stime+ANSI_RESET"] > ");
+
+        //Terminal::getInstance()->setPromt("["+string(time > 10*1000 ? time > 30*1000 ? ANSI_RED : ANSI_BROWN : ANSI_GREEN)+stime+ANSI_RESET"] > ");
+        Terminal::getInstance()->setPromt("["+getDate()+"] > ");
         usleep(1000);
         time++;
 

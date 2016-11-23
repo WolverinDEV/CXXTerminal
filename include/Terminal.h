@@ -117,7 +117,7 @@ namespace Terminal {
                 int cursorPosition = 0;
                 std::vector<char> cursorBuffer;
 
-                bool newInputTyped = false;
+                bool newInputTyped = true;
 
                 std::vector<TabCompleter *> tabCompleters;
                 std::vector<std::string> currentTabComplete;
