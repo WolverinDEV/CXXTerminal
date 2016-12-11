@@ -2,26 +2,26 @@
 // Created by wolverindev on 04.12.16.
 //
 
+#include <cmath>
 #include <malloc.h>
 #include <algorithm>
 #include "../../include/TerminalGrapth.h"
 #include "../../include/QuickTerminal.h"
-#include <cmath>
 
 using namespace std;
-using namespace Terminal;
+using namespace Terminal::Grafics::Diagram;
 
-void Terminal::ValueTable::addValue(ValueTableEntry value) {
+void Graph::addValue(Point value) {
     removeValue(value.x); //Remove old points
     points.push_back(value);
 
-    sort(this->points.begin(), this->points.end(), [](ValueTableEntry& a,ValueTableEntry& b){
+    sort(this->points.begin(), this->points.end(), [](Point& a,Point& b){
         return a.x < b.x;
     });
 }
 
-void Terminal::ValueTable::removeValue(double x) {
-    vector<ValueTableEntry> removing;
+void Graph::removeValue(double x) {
+    vector<Point> removing;
     for(auto it = this->points.begin(); it != this->points.end(); it++)
         if(it->x == x)
             removing.push_back(*it);
@@ -29,19 +29,19 @@ void Terminal::ValueTable::removeValue(double x) {
     for(auto it = removing.begin(); it != removing.end(); it++)
         this->points.erase(find(this->points.begin(), this->points.end(), *it));
 }
-std::vector<ValueTableEntry> Terminal::ValueTable::getValues() {
+std::vector<Point> Graph::getValues() {
     return this->points;
 }
 
-ValueTableEntry* getPointHigher(vector<ValueTableEntry>& list, double x){
+Point* getPointHigher(vector<Point>& list, double x){
     for(auto it = list.begin(); it != list.end(); it++){
         if(it.operator*().x >= x)
             return &(*it);
     }
     return nullptr;
 }
-ValueTableEntry* getPointLower(vector<ValueTableEntry>& list, double x){
-    ValueTableEntry* current = nullptr;
+Point* getPointLower(vector<Point>& list, double x){
+    Point* current = nullptr;
 
     for(auto it = list.begin(); it != list.end(); it++){
         if(it.operator*().x > x)
@@ -52,9 +52,9 @@ ValueTableEntry* getPointLower(vector<ValueTableEntry>& list, double x){
     return current;
 }
 
-void Terminal::ValueTable::getValue(double x, ValueTableEntry* out) {
+void Graph::getValue(double x, Point* out) {
     if(this->points.empty()){
-        *out = ValueTableEntry{x, 0};
+        *out = Point{x, 0};
         return;
     }
     if(this->points.size() == 1){
@@ -62,12 +62,12 @@ void Terminal::ValueTable::getValue(double x, ValueTableEntry* out) {
         return;
     }
 
-    ValueTableEntry* lower = getPointLower(this->points, x);
+    Point* lower = getPointLower(this->points, x);
 
-    ValueTableEntry* higher = getPointHigher(this->points, x);
+    Point* higher = getPointHigher(this->points, x);
 
     if(lower == higher && lower != nullptr){
-        *out = ValueTableEntry{x, lower->y};
+        *out = Point{x, lower->y};
         return;
     }
 
@@ -94,11 +94,11 @@ void Terminal::ValueTable::getValue(double x, ValueTableEntry* out) {
     //writeMessage("Pitch: "+to_string(pitch));
     double xDiff = x - lower->x;
     //writeMessage("Out: "+to_string(lower->y + xDiff * pitch)+" for "+to_string(x));
-    *out = ValueTableEntry{x, lower->y + xDiff * pitch};
+    *out = Point{x, lower->y + xDiff * pitch};
 }
 
 
-bool Terminal::ValueTableEntry::operator==(const ValueTableEntry val) {
+bool Point::operator==(const Point val) {
     return x == val.x && y == val.y;
 }
 
@@ -120,17 +120,17 @@ inline int getSize(double number, int digsits){
     return toString(number, digsits).size();
 }
 
-Grapth::Grapth() {
+CoordinateSystem::CoordinateSystem() {
     this->xAxisName = CString("X");
     this->yAxisName = CString("Y");
 }
 
-int Terminal::Grapth::calculateXSection(int sizeX){
+int CoordinateSystem::calculateXSection(int sizeX){
     double stepsPerColumn = (endX-startX) / stepX;
     return (int) floor(sizeX / stepsPerColumn);
 }
 
-void Terminal::Grapth::buildGraph(int startIndex, CString *linex, int lSize, double deltaPerLine, int xSize, bool smoth) {
+void CoordinateSystem::buildGraph(int startIndex, CString *linex, int lSize, double deltaPerLine, int xSize, bool smoth) {
     for(int i = 0;i<lSize;i++)
         while (linex[i].chars.size() < startIndex+xSize)
             linex[i] += "§r ";
@@ -139,7 +139,7 @@ void Terminal::Grapth::buildGraph(int startIndex, CString *linex, int lSize, dou
     writeMessage("Steps: "+to_string(stepsPerColumn)+" - "+to_string(xSize));
     double count = startX;
 
-    ValueTableEntry* entry = new ValueTableEntry;
+    Point* entry = new Point;
     for(int i = 1;i<xSize;i++){
         if(i > 1) { //Dont calculate the first
             for (auto graph = this->tables.begin(); graph != this->tables.end(); graph++) {
@@ -164,7 +164,7 @@ void Terminal::Grapth::buildGraph(int startIndex, CString *linex, int lSize, dou
     delete entry;
 }
 
-void Terminal::Grapth::buildXScale(CString *lines, int lSize, CString prefix, int sizeX) {
+void CoordinateSystem::buildXScale(CString *lines, int lSize, CString prefix, int sizeX) {
     for(int i = 0;i<lSize;i++)
         lines[i] += prefix;
     int lastUsed = 0;
@@ -210,7 +210,7 @@ void Terminal::Grapth::buildXScale(CString *lines, int lSize, CString prefix, in
     lines[lastUsed] += xAxisName;
 }
 
-int Terminal::Grapth::buildYScale(CString *lines, int size){
+int CoordinateSystem::buildYScale(CString *lines, int size){
     double delta = (double) (endY-startY) / (double) (size-1);
 
     int digSize = max(getSize(startY+delta*size, 2),(int) yAxisName.chars.size());
@@ -224,7 +224,7 @@ int Terminal::Grapth::buildYScale(CString *lines, int size){
     return digSize + 2;
 }
 
-std::vector<std::string> Terminal::Grapth::buildLine(int xSize, int ySize, int xScaleRows) {
+std::vector<std::string> CoordinateSystem::buildLine(int xSize, int ySize, int xScaleRows) {
     CString* lines = new CString[ySize];
     for(int i = 0;i<ySize;i++){
         lines[i] = CString("");
@@ -248,7 +248,7 @@ std::vector<std::string> Terminal::Grapth::buildLine(int xSize, int ySize, int x
 }
 
 
-int cspline_interpolate(ValueTableEntry *tab, int ntab, ValueTableEntry *data_out, int nout)
+int cspline_interpolate(Point *tab, int ntab, Point *data_out, int nout)
 {
     int i, k, jo, ilo, ihi, im;
     double sigma, Un, p, Qn, aux, a, b;
@@ -337,11 +337,11 @@ int cspline_interpolate(ValueTableEntry *tab, int ntab, ValueTableEntry *data_ou
 }
 
 // used to reverse or restore data order for data with descending X
-void spline_flipX(ValueTableEntry* data_in, int ndata)
+void spline_flipX(Point* data_in, int ndata)
 {
     int start = 0;
     int end = ndata -1;
-    ValueTableEntry tmp;
+    Point tmp;
     while(start < end)
     {
         tmp = data_in[start];

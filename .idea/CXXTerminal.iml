@@ -7,10 +7,11 @@
       <sourceFolder url="file://$MODULE_DIR$/src/utils/Grapth.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/utils/CString.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/include/QuickTerminal.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/include/Terminal.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/include/CString.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/include/Terminal.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/include/QuickTerminal.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/include/AdvancedTabCompleter.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/include/TerminalTable.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/include/TerminalGrapth.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test/Main.cpp" isTestSource="false" />
     </content>

@@ -9,51 +9,55 @@
 #include "CString.h"
 
 namespace Terminal {
-        struct ValueTableEntry {
-            double x;
-            double y;
+    namespace Grafics {
+        namespace Diagram {
+            struct Point {
+                double x;
+                double y;
 
-            inline bool operator==(const ValueTableEntry);
-        };
+                inline bool operator==(const Point);
+            };
 
-        class ValueTable {
-            public:
-                void getValue(double x, ValueTableEntry* out);
-                void addValue(ValueTableEntry value);
-                void removeValue(double x);
-                std::vector<ValueTableEntry> getValues();
+            class Graph {
+                public:
+                    void getValue(double x, Point* out);
+                    void addValue(Point value);
+                    void removeValue(double x);
+                    std::vector<Point> getValues();
 
-                CChar dchar;
-                bool gussUnknownValue = false;
-            private:
-                std::vector<ValueTableEntry> points;
-        };
+                    CChar dchar;
+                    bool gussUnknownValue = false;
+                private:
+                    std::vector<Point> points;
+            };
 
-        class Grapth {
-            public:
-                Grapth();
+            class CoordinateSystem {
+                public:
+                    CoordinateSystem();
 
-                std::vector<std::string> buildLine(int xSize, int ySize, int xScaleRows);
+                    std::vector<std::string> buildLine(int xSize, int ySize, int xScaleRows);
 
-                int startX;
-                int endX;
-                int stepX;
+                    int startX;
+                    int endX;
+                    int stepX;
 
-                int startY;
-                int endY;
+                    int startY;
+                    int endY;
 
-                CString yAxisName;
-                CString xAxisName;
+                    CString yAxisName;
+                    CString xAxisName;
 
 
-                std::vector<ValueTable> tables;
+                    std::vector<Graph> tables;
 
-            private:
-                int buildYScale(CString *lines, int size);
-                void buildXScale(CString* lines,int lSize,CString prefix,int size);
+                private:
+                    int buildYScale(CString *lines, int size);
+                    void buildXScale(CString* lines,int lSize,CString prefix,int size);
 
-                void buildGraph(int startIndex, CString* linex, int lSize, double deltaPerLine, int, bool);
+                    void buildGraph(int startIndex, CString* linex, int lSize, double deltaPerLine, int, bool);
 
-                int calculateXSection(int sizeX);
-        };
+                    int calculateXSection(int sizeX);
+            };
+        }
+    }
 }

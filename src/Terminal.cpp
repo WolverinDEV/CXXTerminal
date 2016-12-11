@@ -110,7 +110,6 @@ int TerminalImpl::startReader() {
         initArgs.readedFunction = [&](int character){
             this->charReaded(character);
         };
-
         return pthread_create(readerThread, nullptr, terminalReaderThread, ptrArgs);
     }
     return -1;

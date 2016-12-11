@@ -16,7 +16,7 @@ file(GLOB TEST test/*)
 message("Files: ${SOURCES}")
 
 # Create shared library
-add_library(${PROJECT_NAME} SHARED ${SOURCES} include/TerminalGrapth.h include/CString.h)
+add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
 
 # Install library
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/)

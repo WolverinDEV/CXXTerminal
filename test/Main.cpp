@@ -41,18 +41,18 @@ void handleLine(std::string& message){
 int main(int argsSize, char** args){
     Terminal::setup();
 
-    Terminal::ValueTable table;
+    Terminal::Grafics::Diagram::Graph table;
     table.dchar._char = '#';
     table.gussUnknownValue = true;
 
-    table.addValue(Terminal::ValueTableEntry{(double) 0,(double) 0});
+    table.addValue(Terminal::Grafics::Diagram::Point{(double) 0,(double) 0});
     //table.addValue(Terminal::ValueTableEntry{(double) 5,(double) 2.5});
-    table.addValue(Terminal::ValueTableEntry{(double) 10,(double) 10});
+    table.addValue(Terminal::Grafics::Diagram::Point{(double) 10,(double) 10});
 
-    Terminal::ValueTableEntry* out = new Terminal::ValueTableEntry;
+    Terminal::Grafics::Diagram::Point* out = new Terminal::Grafics::Diagram::Point;
     table.getValue(7, out);
     //writeMessage("Y at 7: "+to_string(out->y));
-    Terminal::Grapth grapth;
+    Terminal::Grafics::Diagram::CoordinateSystem grapth;
     grapth.tables.push_back(table);
 
     grapth.startY = 0;
