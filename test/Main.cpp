@@ -11,6 +11,8 @@
 #include "../include/AdvancedTabCompleter.h"
 #include "../include/TerminalGrapth.h"
 #include "../include/CString.h"
+#include <iostream>
+#include <limits>
 
 using namespace std;
 
@@ -39,6 +41,7 @@ void handleLine(std::string& message){
 }
 
 int main(int argsSize, char** args){
+
     Terminal::setup();
 
     Terminal::Grafics::Diagram::Graph table;

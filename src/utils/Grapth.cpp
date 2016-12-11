@@ -5,6 +5,8 @@
 #include <cmath>
 #include <malloc.h>
 #include <algorithm>
+#include <limits>
+
 #include "../../include/TerminalGrapth.h"
 #include "../../include/QuickTerminal.h"
 
@@ -76,7 +78,7 @@ void Graph::getValue(double x, Point* out) {
             return;
         }
         lower = higher;
-        higher = getPointHigher(this->points, lower->x+0.000000001);
+        higher = getPointHigher(this->points, lower->x+0.00000000000001);
     }
 
     if(higher == nullptr){
@@ -84,7 +86,7 @@ void Graph::getValue(double x, Point* out) {
             return;
         }
         higher = lower;
-        lower = getPointLower(this->points, higher->x-0.000000001);
+        lower = getPointLower(this->points, higher->x-0.00000000000001);
     }
 
     //writeMessage("Use point ("+to_string(lower->x)+"/"+to_string(lower->y)+") as lower and ("+to_string(higher->x)+"/"+to_string(higher->y)+") as higher");
