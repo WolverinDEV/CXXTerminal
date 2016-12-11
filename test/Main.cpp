@@ -43,8 +43,10 @@ int main(int argsSize, char** args){
 
     Terminal::ValueTable table;
     table.dchar._char = '#';
+    table.gussUnknownValue = true;
+
     table.addValue(Terminal::ValueTableEntry{(double) 0,(double) 0});
-    table.addValue(Terminal::ValueTableEntry{(double) 5,(double) 2.5});
+    //table.addValue(Terminal::ValueTableEntry{(double) 5,(double) 2.5});
     table.addValue(Terminal::ValueTableEntry{(double) 10,(double) 10});
 
     Terminal::ValueTableEntry* out = new Terminal::ValueTableEntry;
@@ -54,14 +56,14 @@ int main(int argsSize, char** args){
     grapth.tables.push_back(table);
 
     grapth.startY = 0;
-    grapth.endY = 10;
+    grapth.endY = 12;
 
     grapth.startX = 0;
-    grapth.endX = 10;
+    grapth.endX = 12;
     grapth.stepX = 1;
     grapth.xAxisName = CString("§cHello :D");
 
-    vector<string> vec = grapth.buildLine(100, 15, 4);
+    vector<string> vec = grapth.buildLine(120, 15, 4);
     for(auto it = vec.begin(); it != vec.end();it++)
         writeMessage(*it);
     delete out;

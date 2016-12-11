@@ -76,7 +76,7 @@ void Terminal::ValueTable::getValue(double x, ValueTableEntry* out) {
             return;
         }
         lower = higher;
-        higher = getPointHigher(this->points, lower->x);
+        higher = getPointHigher(this->points, lower->x+0.000000001);
     }
 
     if(higher == nullptr){
@@ -84,16 +84,16 @@ void Terminal::ValueTable::getValue(double x, ValueTableEntry* out) {
             return;
         }
         higher = lower;
-        lower = getPointLower(this->points, higher->x);
+        lower = getPointLower(this->points, higher->x-0.000000001);
     }
 
-    writeMessage("Use point ("+to_string(lower->x)+"/"+to_string(lower->y)+") as lower and ("+to_string(higher->x)+"/"+to_string(higher->y)+") as higher");
+    //writeMessage("Use point ("+to_string(lower->x)+"/"+to_string(lower->y)+") as lower and ("+to_string(higher->x)+"/"+to_string(higher->y)+") as higher");
     double yPitch = higher->y - lower->y;
     double xPitch = higher->x - lower->x;
     double pitch = yPitch / xPitch;
-    writeMessage("Pitch: "+to_string(pitch));
+    //writeMessage("Pitch: "+to_string(pitch));
     double xDiff = x - lower->x;
-
+    //writeMessage("Out: "+to_string(lower->y + xDiff * pitch)+" for "+to_string(x));
     *out = ValueTableEntry{x, lower->y + xDiff * pitch};
 }
 
@@ -109,14 +109,14 @@ inline string leftPad(string in, int size){
     return out;
 }
 
-inline string toString(float num, int digsits){
+inline string toString(double num, int digsits){
     char buffer[100];
     writeMessage("To string: "+to_string(num));
     sprintf(buffer, ("%."+to_string(digsits)+"f").c_str(), num);
     return string(buffer);
 }
 
-inline int getSize(float number, int digsits){
+inline int getSize(double number, int digsits){
     return toString(number, digsits).size();
 }
 
@@ -126,38 +126,40 @@ Grapth::Grapth() {
 }
 
 int Terminal::Grapth::calculateXSection(int sizeX){
-    float stepsPerColumn = (endX-startX) / stepX;
+    double stepsPerColumn = (endX-startX) / stepX;
     return (int) floor(sizeX / stepsPerColumn);
 }
 
-void Terminal::Grapth::buildGraph(int startIndex, CString *linex, int lSize, int xSize, bool smoth) {
+void Terminal::Grapth::buildGraph(int startIndex, CString *linex, int lSize, double deltaPerLine, int xSize, bool smoth) {
     for(int i = 0;i<lSize;i++)
         while (linex[i].chars.size() < startIndex+xSize)
             linex[i] += "§r ";
-    float deltaPerLine = (float) (endY-startY) / (float) lSize;
-    float stepsPerColumn = (float) (endX-startX) / (float) xSize;
-
-    float count = startX;
+    double stepsPerColumn = (float) (endX-startX) / (float) xSize;
+    writeMessage("Delta: "+to_string(deltaPerLine)+" - "+to_string(endY-startY)+" - "+to_string(lSize));
+    writeMessage("Steps: "+to_string(stepsPerColumn)+" - "+to_string(xSize));
+    double count = startX;
 
     ValueTableEntry* entry = new ValueTableEntry;
     for(int i = 1;i<xSize;i++){
-        for(auto graph = this->tables.begin(); graph != this->tables.end();graph++){
-            graph->getValue((double) count, entry);
-            float y = entry->y;
-            if(0){ //TODO add graph fill up
+        if(i > 1) { //Dont calculate the first
+            for (auto graph = this->tables.begin(); graph != this->tables.end(); graph++) {
+                graph->getValue((double) count, entry);
+                double y = entry->y;
+                if (0) { //TODO add graph fill up
 
-            }else {
-                if(y >= startY && y <= endY){
-                    for(int line = 0;line < lSize; line++){
-                        if(y < startY + deltaPerLine*line && startY + deltaPerLine*(line+1) > y){
-                            linex[lSize-line-1].chars[startIndex + i] = graph->dchar;
-                            break;
+                } else {
+                    if (y >= startY-deltaPerLine && y <= endY+deltaPerLine) {
+                        for (int line = 0; line < lSize; line++) {
+                            if (y > startY + deltaPerLine * (line - 1) && startY + deltaPerLine * (line + 1) >= y) {
+                                linex[lSize - line - 1].chars[startIndex + (i - 1)] = graph->dchar;
+                                break;
+                            }
                         }
                     }
                 }
             }
-            count += stepsPerColumn;
         }
+        count += stepsPerColumn;
     }
     delete entry;
 }
@@ -166,8 +168,8 @@ void Terminal::Grapth::buildXScale(CString *lines, int lSize, CString prefix, in
     for(int i = 0;i<lSize;i++)
         lines[i] += prefix;
     int lastUsed = 0;
-    float stepsPerColumn = (float) (endX-startX) / (float) sizeX;
-    float count = startX;
+    double stepsPerColumn = (float) (endX-startX) / (float) sizeX;
+    double count = startX;
     int sectionCount = calculateXSection(sizeX);
 
     for(int i = 0;i<sizeX;i++){
@@ -209,7 +211,7 @@ void Terminal::Grapth::buildXScale(CString *lines, int lSize, CString prefix, in
 }
 
 int Terminal::Grapth::buildYScale(CString *lines, int size){
-    float delta = (float) (endY-startY) / (float) size;
+    double delta = (double) (endY-startY) / (double) (size-1);
 
     int digSize = max(getSize(startY+delta*size, 2),(int) yAxisName.chars.size());
     for(int i = 0;i<size;i++){
@@ -217,7 +219,7 @@ int Terminal::Grapth::buildYScale(CString *lines, int size){
             lines[i] = " "+leftPad(yAxisName.str(), digSize)+ "  ";
             continue;
         }
-        lines[i] += " "+leftPad(toString(endY-delta*i, 2), digSize)+" |";
+        lines[i] += " "+leftPad(toString(endY-delta*(i-1), 2), digSize)+" |";
     }
     return digSize + 2;
 }
@@ -237,7 +239,7 @@ std::vector<std::string> Terminal::Grapth::buildLine(int xSize, int ySize, int x
 
     buildXScale((CString*) (lines+ySize-xScaleRows), xScaleRows, str, xSize);
 
-    buildGraph(prefixLength, lines, ySize-xScaleRows+1, xSize-prefixLength-1, false);
+    buildGraph(prefixLength, lines + 1, ySize-xScaleRows,(endY-startY)/(double)(ySize-xScaleRows-1), xSize, false);
 
     vector<string> out;
     for(int i = 0;i<ySize;i++)

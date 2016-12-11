@@ -24,9 +24,9 @@ namespace Terminal {
                 std::vector<ValueTableEntry> getValues();
 
                 CChar dchar;
+                bool gussUnknownValue = false;
             private:
                 std::vector<ValueTableEntry> points;
-                bool gussUnknownValue = false;
         };
 
         class Grapth {
@@ -52,7 +52,7 @@ namespace Terminal {
                 int buildYScale(CString *lines, int size);
                 void buildXScale(CString* lines,int lSize,CString prefix,int size);
 
-                void buildGraph(int startIndex, CString* linex, int lSize, int, bool);
+                void buildGraph(int startIndex, CString* linex, int lSize, double deltaPerLine, int, bool);
 
                 int calculateXSection(int sizeX);
         };
