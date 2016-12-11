@@ -9,13 +9,14 @@ link_libraries(pthread)
 # Find library headers
 file(GLOB HEADERS include/*.h)
 # Find source files
-file(GLOB SOURCES src/*.cpp)
+file(GLOB_RECURSE SOURCES src/*.cpp)
 # Find source files
 file(GLOB TEST test/*)
 
+message("Files: ${SOURCES}")
 
 # Create shared library
-add_library(${PROJECT_NAME} SHARED ${SOURCES})
+add_library(${PROJECT_NAME} SHARED ${SOURCES} include/TerminalGrapth.h include/CString.h)
 
 # Install library
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/)

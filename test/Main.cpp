@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include "../include/QuickTerminal.h"
 #include "../include/AdvancedTabCompleter.h"
+#include "../include/TerminalGrapth.h"
+#include "../include/CString.h"
 
 using namespace std;
 
@@ -39,6 +41,34 @@ void handleLine(std::string& message){
 int main(int argsSize, char** args){
     Terminal::setup();
 
+    Terminal::ValueTable table;
+    table.dchar._char = '#';
+    table.addValue(Terminal::ValueTableEntry{(double) 0,(double) 0});
+    table.addValue(Terminal::ValueTableEntry{(double) 5,(double) 2.5});
+    table.addValue(Terminal::ValueTableEntry{(double) 10,(double) 10});
+
+    Terminal::ValueTableEntry* out = new Terminal::ValueTableEntry;
+    table.getValue(7, out);
+    //writeMessage("Y at 7: "+to_string(out->y));
+    Terminal::Grapth grapth;
+    grapth.tables.push_back(table);
+
+    grapth.startY = 0;
+    grapth.endY = 10;
+
+    grapth.startX = 0;
+    grapth.endX = 10;
+    grapth.stepX = 1;
+    grapth.xAxisName = CString("§cHello :D");
+
+    vector<string> vec = grapth.buildLine(100, 15, 4);
+    for(auto it = vec.begin(); it != vec.end();it++)
+        writeMessage(*it);
+    delete out;
+
+    if(1)
+        return 0;
+
     Terminal::AvTabCompleter tc;
     tc.setMatchOnStart(true);
 
@@ -66,7 +96,6 @@ int main(int argsSize, char** args){
         Terminal::getInstance()->setPromt("["+getDate()+"] > ");
         usleep(1000);
         time++;
-
     }
     return 0;
 }

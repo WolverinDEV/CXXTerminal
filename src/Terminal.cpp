@@ -190,12 +190,12 @@ std::string TerminalImpl::parseCharacterCodes(std::string in) {
                     stream << ANSI_YELLOW; break;
                 case 'f':
                     stream << ANSI_WHITE; break;
+                case 'k': break;
                 case 'n':
                     stream << ANSI_UNDERLINE; break;
                 case 'm':
                     stream << ANSI_UNDERLINE << ANSI_REVERSE; break;
-                case 'o':
-                    break;
+                case 'o': break;
                 case 'l':
                     stream << ANSI_BOLD; break;
                 case 'r':
