@@ -3,6 +3,8 @@ project(CXXTerminal)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
+#add_definitions(-DTERMINAL_NON_BLOCK)
+
 #link pthread
 link_libraries(pthread)
 
@@ -13,13 +15,11 @@ file(GLOB_RECURSE SOURCES src/*.cpp)
 # Find source files
 file(GLOB TEST test/*)
 
-message("Files: ${SOURCES}")
-
 # Create shared library
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
 
 # Install library
-install(TARGETS ${PROJECT_NAME} DESTINATION lib/)
+install(TARGETS ${PROJECT_NAME} DESTINATION /usr/lib)
 install(FILES ${HEADERS} DESTINATION include/${PROJECT_NAME})
 
 #Create test

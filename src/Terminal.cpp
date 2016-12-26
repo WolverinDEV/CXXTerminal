@@ -43,12 +43,15 @@ Terminal::TerminalImpl* Terminal::getInstance() {
 }
 
 void removeNonblock(){
+#ifndef TERMINAL_NON_BLOCK
     tcsetattr(0, TCSANOW, &orig_termios);
     std::cout << ANSI_RESET"\r";
     std::cout.flush();
+#endif
 }
 
 void initNonblock(){
+#ifndef TERMINAL_NON_BLOCK
     struct termios new_termios;
 
     tcgetattr(0, &orig_termios);
@@ -64,6 +67,7 @@ void initNonblock(){
     new_termios.c_cc[VTIME] = 0;
 
     tcsetattr(0, TCSANOW, &new_termios);
+#endif
 }
 
 void* terminalReaderThread(void* args){

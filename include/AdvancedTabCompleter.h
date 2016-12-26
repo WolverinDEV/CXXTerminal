@@ -10,13 +10,36 @@
 #include <vector>
 
 namespace Terminal {
-        class AvTabCompleter {
+        class DependCompleter {
+            public:
+                DependCompleter(std::string, bool ignoreCase = true);
+                DependCompleter(DependCompleter*,std::string, bool ignoreCase = true);
+
+                DependCompleter* parameter(std::string parameter);
+                DependCompleter* wildcard();
+
+                virtual bool accept(std::string in);
+
+                std::vector<DependCompleter*> getNext();
+            private:
+                DependCompleter* root;
+                std::vector<DependCompleter*> next;
+
+                bool ignoreCase;
+                std::string expected;
+        };
+        class WildcardCompleter : public DependCompleter {
+
+        };
+    class
+        class AvTabCompleter : public DependCompleter{
             public:
                 AvTabCompleter();
-                std::vector<std::string> getAvaribilities(int index);
+                std::vector<DependCompleter*> getAvaribilities(std::vector<std::string>& args, int index);
 
-                void addParameter(int index, std::string parm);
-                void unregister(int index, std::string parm);
+                //DependCompleter* addParameter(int index = 0, std::string parm);
+                //void unregister(int index, std::string parm);
+                //void unregister(int index, DependCompleter* parm);
 
                 TabCompleter& getBasedCompleter(){
                     return this->baseCompleter;
@@ -35,7 +58,7 @@ namespace Terminal {
 
                 void pushbackArg(int index, std::string& str);
 
-                std::vector<std::vector<std::string>> parms;
+                std::vector<DependCompleter*> parms;
         };
 }
 
