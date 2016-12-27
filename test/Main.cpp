@@ -12,7 +12,7 @@
 #include "../include/TerminalGrapth.h"
 #include "../include/CString.h"
 #include <iostream>
-#include <limits>
+#include <list>
 
 using namespace std;
 
@@ -40,16 +40,29 @@ void handleLine(std::string& message){
     }
 }
 
+using namespace Terminal;
+
 int main(int argsSize, char** args){
 
     Terminal::setup();
 
+    AvTabCompleter cmp;
+    cmp.parameter("hello")->parameter("hell!");
+    cmp.parameter("hello")->parameter("World");
+    cmp.parameter("world")->parameter("World");
+    cmp.wildcard()->parameter("xxxx");
+    cmp.unregisterWildcard();
+    cmp.unregister("hello");
+
+    Terminal::getInstance()->addTabCompleter(cmp.getBasedCompleter());
+
+    /*
     Terminal::Grafics::Diagram::Graph table;
     table.dchar._char = '#';
     table.gussUnknownValue = true;
 
     table.addValue(Terminal::Grafics::Diagram::Point{(double) 0,(double) 0});
-    //table.addValue(Terminal::ValueTableEntry{(double) 5,(double) 2.5});
+    table.addValue(Terminal::Grafics::Diagram::Point{(double) 5,(double) 1});
     table.addValue(Terminal::Grafics::Diagram::Point{(double) 10,(double) 10});
 
     Terminal::Grafics::Diagram::Point* out = new Terminal::Grafics::Diagram::Point;
@@ -70,21 +83,7 @@ int main(int argsSize, char** args){
     for(auto it = vec.begin(); it != vec.end();it++)
         writeMessage(*it);
     delete out;
-
-    if(1)
-        return 0;
-
-    Terminal::AvTabCompleter tc;
-    tc.setMatchOnStart(true);
-
-    tc.addParameter(0, "test");
-    tc.addParameter(0, "world");
-    tc.addParameter(0, "worl2");
-
-    tc.addParameter(1, "hey");
-    tc.addParameter(1, "hello");
-
-    Terminal::getInstance()->addTabCompleter(&(tc.getBasedCompleter()));
+    */
 
     int time = 0;
     while (Terminal::isActive()){
@@ -97,8 +96,8 @@ int main(int argsSize, char** args){
 
         std::string stime = to_string(time);
 
-        //Terminal::getInstance()->setPromt("["+string(time > 10*1000 ? time > 30*1000 ? ANSI_RED : ANSI_BROWN : ANSI_GREEN)+stime+ANSI_RESET"] > ");
-        Terminal::getInstance()->setPromt("["+getDate()+"] > ");
+        Terminal::getInstance()->setPromt("["+string(time > 10*1000 ? time > 30*1000 ? ANSI_RED : ANSI_BROWN : ANSI_GREEN)+stime+ANSI_RESET"] > ");
+        //Terminal::getInstance()->setPromt("["+getDate()+"] > ");
         usleep(1000);
         time++;
     }

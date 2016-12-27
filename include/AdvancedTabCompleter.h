@@ -11,54 +11,50 @@
 
 namespace Terminal {
         class DependCompleter {
+                friend class AvTabCompleter;
             public:
                 DependCompleter(std::string, bool ignoreCase = true);
                 DependCompleter(DependCompleter*,std::string, bool ignoreCase = true);
+                ~DependCompleter();
 
                 DependCompleter* parameter(std::string parameter);
+                bool unregister(std::string parameter);
+
                 DependCompleter* wildcard();
+                bool unregisterWildcard();
 
                 virtual bool accept(std::string in);
+                virtual bool acceptExact(std::string in);
 
                 std::vector<DependCompleter*> getNext();
+                std::string expected;
             private:
                 DependCompleter* root;
                 std::vector<DependCompleter*> next;
 
                 bool ignoreCase;
-                std::string expected;
         };
         class WildcardCompleter : public DependCompleter {
+            public:
+                WildcardCompleter(DependCompleter*);
 
+                virtual bool accept(std::string in) override;
+
+                virtual bool acceptExact(std::string in) override;
         };
-    class
+
         class AvTabCompleter : public DependCompleter{
             public:
                 AvTabCompleter();
-                std::vector<DependCompleter*> getAvaribilities(std::vector<std::string>& args, int index);
+                std::vector<DependCompleter*> getAvaribilities(std::vector<std::string>& args/*, int index*/);
 
-                //DependCompleter* addParameter(int index = 0, std::string parm);
-                //void unregister(int index, std::string parm);
-                //void unregister(int index, DependCompleter* parm);
-
-                TabCompleter& getBasedCompleter(){
-                    return this->baseCompleter;
-                }
-
-                bool isMatchStart(){
-                    return suggestOnStartMath;
-                }
-                void setMatchOnStart(bool flag){
-                    this->suggestOnStartMath = flag;
+                TabCompleter* getBasedCompleter(){
+                    return &this->baseCompleter;
                 }
             private:
                 TabCompleter baseCompleter = NULL;
 
-                bool suggestOnStartMath = true;
-
                 void pushbackArg(int index, std::string& str);
-
-                std::vector<DependCompleter*> parms;
         };
 }
 

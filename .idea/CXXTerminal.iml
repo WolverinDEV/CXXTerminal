@@ -7,27 +7,26 @@
       <sourceFolder url="file://$MODULE_DIR$/src/utils/Grapth.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/utils/CString.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/include/CString.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/include/Terminal.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/include/QuickTerminal.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/include/AdvancedTabCompleter.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/include/TerminalTable.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/include/TerminalGrapth.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/include/QuickTerminal.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/include/Terminal.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/include/CString.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/include/AdvancedTabCompleter.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test/Main.cpp" isTestSource="false" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
       <library name="Header Search Paths">
         <CLASSES>
-          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/5/include-fixed" />
-          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/5/include" />
           <root url="file:///usr/include" />
+          <root url="file:///usr/lib/gcc/i686-linux-gnu/5/include-fixed" />
+          <root url="file:///usr/lib/gcc/i686-linux-gnu/5/include" />
           <root url="file:///usr/local/include" />
         </CLASSES>
         <SOURCES>
-          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/5/include-fixed" />
-          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/5/include" />
           <root url="file:///usr/include" />
+          <root url="file:///usr/lib/gcc/i686-linux-gnu/5/include-fixed" />
+          <root url="file:///usr/lib/gcc/i686-linux-gnu/5/include" />
           <root url="file:///usr/local/include" />
         </SOURCES>
       </library>
