@@ -1,0 +1,2 @@
+/usr/local/lib/CXXTerminal/libCXXTerminal.so
+/usr/local/include/CXXTerminal/Terminal.h

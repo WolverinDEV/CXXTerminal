@@ -10,9 +10,7 @@
 #include "../include/QuickTerminal.h"
 #include "../include/AdvancedTabCompleter.h"
 #include "../include/TerminalGrapth.h"
-#include "../include/CString.h"
-#include <iostream>
-#include <list>
+#include "../include/ArgumentParser.h"
 
 using namespace std;
 
@@ -45,6 +43,8 @@ using namespace Terminal;
 int main(int argsSize, char** args){
 
     Terminal::setup();
+
+    ArgumentParser parser;
 
     AvTabCompleter cmp;
     cmp.parameter("hello")->parameter("hell!");
