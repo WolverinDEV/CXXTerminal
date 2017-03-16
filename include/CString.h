@@ -2,8 +2,7 @@
 // Created by wolverindev on 04.12.16.
 //
 
-#ifndef CXXTERMINAL_CSTRING_H
-#define CXXTERMINAL_CSTRING_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -43,6 +42,3 @@ class CString{
     //private:
         std::vector<CChar> chars;
 };
-
-
-#endif //CXXTERMINAL_CSTRING_H

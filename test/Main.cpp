@@ -41,7 +41,6 @@ void handleLine(std::string& message){
 using namespace Terminal;
 
 int main(int argsSize, char** args){
-
     Terminal::setup();
 
     ArgumentParser parser;
@@ -51,8 +50,8 @@ int main(int argsSize, char** args){
     cmp.parameter("hello")->parameter("World");
     cmp.parameter("world")->parameter("World");
     cmp.wildcard()->parameter("xxxx");
-    cmp.unregisterWildcard();
-    cmp.unregister("hello");
+    //cmp.unregisterWildcard();
+    //cmp.unregister("hello");
 
     Terminal::getInstance()->addTabCompleter(cmp.getBasedCompleter());
 
@@ -96,8 +95,8 @@ int main(int argsSize, char** args){
 
         std::string stime = to_string(time);
 
-        Terminal::getInstance()->setPromt("["+string(time > 10*1000 ? time > 30*1000 ? ANSI_RED : ANSI_BROWN : ANSI_GREEN)+stime+ANSI_RESET"] > ");
-        //Terminal::getInstance()->setPromt("["+getDate()+"] > ");
+        //Terminal::getInstance()->setPromt("["+string(time > 10*1000 ? time > 30*1000 ? ANSI_RED : ANSI_BROWN : ANSI_GREEN)+stime+ANSI_RESET"] > ");
+        Terminal::getInstance()->setPromt("["+getDate()+"] > ");
         usleep(1000);
         time++;
     }

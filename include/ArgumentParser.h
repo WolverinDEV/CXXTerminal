@@ -47,16 +47,13 @@ namespace ArgumentTypes {
                     applay = [var, longArg, validator](string value){
                         std::transform(value.begin(), value.end(), value.begin(), ::tolower);
 
-                        bool number = (value.compare("true") == 0 || value.compare("1") == 0 || value.compare("t") == 0) ? 1 : 0;
+                        bool number = (value.compare("true") == 0 || value.compare("1") == 0 || value.compare("t") == 0) ? true : false;
                         if(!validator(&number)){
 #ifdef DEBUG
                             writeMessage("[DEBUG] Dont use val "+to_string(number)+" for "+longArg);
 #endif
                             return 0;
                         }
-#ifdef DEBUG
-                        writeMessage("Changing "+longArg+" to "+(number == 1 ? "true" : "false"));
-#endif
                         *var = number;
                     };
                     const bool defaultVal = *var;
@@ -65,6 +62,8 @@ namespace ArgumentTypes {
                     };
                 };
         };
+
+
 
         typedef std::function<bool(int*)> IntegerValidator;
 
@@ -95,7 +94,7 @@ namespace ArgumentTypes {
                     };
                 };
 
-                IntegerArgument(string shortArg, string longArg, int min, int max, int* var, string description) : IntegerArgument(shortArg, longArg, (IntegerValidator) [longArg, min, max](int* number){
+                IntegerArgument(string shortArg, string longArg, int min, int max, int* var, string description) : IntegerArgument(shortArg, longArg, (IntegerValidator) ([longArg, min, max](int* number){
                     if(*number < min){
                         writeMessage("§cInvalid argument! Argument '"+longArg+"' is smaler than "+to_string(min));
                         return 0;
@@ -105,7 +104,7 @@ namespace ArgumentTypes {
                         return 0;
                     }
                     return 1;
-                }, var, description) {};
+                }), var, description) {};
         };
 
         const IntegerValidator ALL_INT_ARG_TESTER = [](int*){
