@@ -17,7 +17,7 @@ void Graph::addValue(Point value) {
     removeValue(value.x); //Remove old points
     points.push_back(value);
 
-    sort(this->points.begin(), this->points.end(), [](Point& a,Point& b){
+    sort(this->points.begin(), this->points.end(), [](Point a,Point b){
         return a.x < b.x;
     });
 }

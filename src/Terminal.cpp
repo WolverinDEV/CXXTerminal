@@ -57,11 +57,10 @@ void initNonblock(){
     memcpy(&new_termios, &orig_termios, sizeof(new_termios));
 
     atexit(removeNonblock);
-    //cfmakeraw(&new_termios);
 
     new_termios.c_lflag &= ~ICANON;
     new_termios.c_lflag &= ~ECHO;
-    new_termios.c_lflag &= ~ISIG;
+
     new_termios.c_cc[VMIN] = 0;
     new_termios.c_cc[VTIME] = 0;
 
@@ -372,14 +371,6 @@ void TerminalImpl::charReaded(int character) {
             }
             //printMessage("New cursor position: "+to_string(cursorPosition));
         }
-    } else if(character == 11){
-        //printMessage("Having 11 char!");
-        int readed = readNextByte();
-        if(readed == 3){
-            exit(1);
-            //raise(SIGABRT);
-        } else;
-        //printMessage("Readed: "+to_string(readed));
     } else if(character == 127){
         if(cursorPosition > 0){
             cursorPosition--;
