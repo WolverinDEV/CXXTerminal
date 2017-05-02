@@ -8,7 +8,6 @@
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
-#include <string.h>
 #include <termios.h>
 #include <csignal>
 #include <algorithm>
@@ -249,13 +248,19 @@ void TerminalImpl::redrawLine(bool lockMutex) {
 }
 
 void TerminalImpl::writeMessage(std::string message, bool noCharacterCodes) {
-    pthread_mutex_lock(&mutex);
-    if(!noCharacterCodes)
-        std::cout << ANSI_RESET"\r" << parseCharacterCodes(message) << "\x1B[K" << std::endl;
-    else
-        std::cout << ANSI_RESET"\r" << message << "\x1B[K" << std::endl;
-    redrawLine(false);
-    pthread_mutex_unlock(&mutex);
+    try {
+        pthread_mutex_lock(&mutex);
+        if(!noCharacterCodes)
+            std::cout << ANSI_RESET"\r" << parseCharacterCodes(message) << "\x1B[K" << std::endl;
+        else
+            std::cout << ANSI_RESET"\r" << message << "\x1B[K" << std::endl;
+        redrawLine(false);
+        pthread_mutex_unlock(&mutex);
+    }catch (...){
+        std::cout << "writeMessage() error" << std::endl;
+        pthread_mutex_unlock(&mutex);
+        throw;
+    }
 }
 
 template <typename T>

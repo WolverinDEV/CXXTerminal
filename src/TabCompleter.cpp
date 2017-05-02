@@ -95,8 +95,6 @@ namespace Terminal {
                     writeMessage("Y: "+to_string(this->next.size()));
                     //this->next.erase(it);
                     delete completer;
-
-                    writeMessage("DELET!: "+to_string(this->next.size()));
                     return true;
                 }
             return false;
@@ -114,7 +112,7 @@ namespace Terminal {
         bool DependCompleter::unregisterWildcard() {
             for (auto it = this->next.begin(); it != this->next.end(); it++)
                 if (dynamic_cast<WildcardCompleter *>(*it) != nullptr){
-                    //this->next.erase(std::find(this->next.begin(), this->next.end(), *it), this->next.end());
+                    this->next.erase(std::find(this->next.begin(), this->next.end(), *it));
                     delete *it; //Automaticly get removed
                     return true;
                 }

@@ -53,7 +53,6 @@ int main(int argsSize, char** args){
     cmp.wildcard()->parameter("xxxx");
     cmp.unregisterWildcard();
     cmp.unregister("hello");
-
     Terminal::getInstance()->addTabCompleter(cmp.getBasedCompleter());
 
     /*
