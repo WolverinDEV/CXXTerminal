@@ -20,6 +20,9 @@ namespace Terminal {
                 DependCompleter* parameter(std::string parameter);
                 bool unregister(std::string parameter);
 
+                bool registerTabCompleter(DependCompleter* completer);
+                bool unregisterTabCompleter(DependCompleter* completer);
+
                 DependCompleter* wildcard();
                 bool unregisterWildcard();
 
