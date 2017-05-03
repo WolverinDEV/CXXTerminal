@@ -12,6 +12,7 @@
 #include <csignal>
 #include <algorithm>
 #include <sys/time.h>
+#include <cstring>
 
 
 /**
