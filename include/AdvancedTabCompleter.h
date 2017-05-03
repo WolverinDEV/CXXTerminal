@@ -2,9 +2,6 @@
 // Created by wolverindev on 22.11.16.
 //
 
-#ifndef CXXTERMINAL_ADVANCEDTABCOMPLETER_H
-#define CXXTERMINAL_ADVANCEDTABCOMPLETER_H
-
 #include "Terminal.h"
 #include <string>
 #include <vector>
@@ -60,6 +57,3 @@ namespace Terminal {
                 void pushbackArg(int index, std::string& str);
         };
 }
-
-
-#endif //CXXTERMINAL_ADVANCEDTABCOMPLETER_H
