@@ -95,9 +95,9 @@ namespace Terminal {
                 int startReader();
 
                 int stopReader();
-            private:
-                std::string parseCharacterCodes(std::string in);
 
+                std::string parseCharacterCodes(std::string in);
+            private:
                 void printCommand(std::string command);
 
                 int readNextByte();
