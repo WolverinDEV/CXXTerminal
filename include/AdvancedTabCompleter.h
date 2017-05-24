@@ -1,6 +1,4 @@
-//
-// Created by wolverindev on 22.11.16.
-//
+#pragma once
 
 #include "Terminal.h"
 #include <string>
