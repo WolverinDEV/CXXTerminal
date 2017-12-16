@@ -32,19 +32,28 @@ void handleLine(std::string& message){
     std::transform(lmessage.begin(), lmessage.end(), lmessage.begin(), ::tolower);
 
     Terminal::getInstance()->writeMessage("Having message: "+message);
-    if(lmessage.compare("exit") == 0 || lmessage.compare("q") == 0 || lmessage.compare("quit") == 0){
+    if(lmessage == "exit" || lmessage == "q" || lmessage == "quit"){
         Terminal::getInstance()->writeMessage("§aExit program");
         Terminal::uninstall();
     }
 }
 
 using namespace Terminal;
+using namespace std::chrono;
 
 int main(int argsSize, char** args){
 
     Terminal::setup();
 
+    /*
     ArgumentParser parser;
+    int number;
+    parser.addArgument(ArgumentTypes::IntegerArgument("n", "number", ArgumentTypes::IntegerArgument::VALIDATOR_POSITIVE_OR_INF, &number, "A random number"));
+    const char* message[] = {"-n", "\"1\""};
+    cout << "X -> " << parser.parseArguments(2, (char**) message) << endl;
+    cout << "Y -> " << number << endl;
+    if(true) return 0;
+     */
 
     AvTabCompleter cmp;
     cmp.parameter("hello")->parameter("hell!");
@@ -55,19 +64,20 @@ int main(int argsSize, char** args){
     cmp.unregister("hello");
     Terminal::getInstance()->addTabCompleter(cmp.getBasedCompleter());
 
-    /*
-    Terminal::Grafics::Diagram::Graph table;
+    Terminal::getInstance()->writeMessage("§aHello §bworld § X §a");
+
+    Terminal::Graphics::Diagram::Graph table;
     table.dchar._char = '#';
     table.gussUnknownValue = true;
 
-    table.addValue(Terminal::Grafics::Diagram::Point{(double) 0,(double) 0});
-    table.addValue(Terminal::Grafics::Diagram::Point{(double) 5,(double) 1});
-    table.addValue(Terminal::Grafics::Diagram::Point{(double) 10,(double) 10});
+    table.addValue(Terminal::Graphics::Diagram::Point{(double) 0,(double) 0});
+    table.addValue(Terminal::Graphics::Diagram::Point{(double) 5,(double) 1});
+    table.addValue(Terminal::Graphics::Diagram::Point{(double) 10,(double) 10});
 
-    Terminal::Grafics::Diagram::Point* out = new Terminal::Grafics::Diagram::Point;
+    Terminal::Graphics::Diagram::Point* out = new Terminal::Graphics::Diagram::Point;
     table.getValue(7, out);
     //writeMessage("Y at 7: "+to_string(out->y));
-    Terminal::Grafics::Diagram::CoordinateSystem grapth;
+    Terminal::Graphics::Diagram::CoordinateSystem grapth;
     grapth.tables.push_back(table);
 
     grapth.startY = 0;
@@ -82,9 +92,10 @@ int main(int argsSize, char** args){
     for(auto it = vec.begin(); it != vec.end();it++)
         writeMessage(*it);
     delete out;
-    */
 
     int time = 0;
+
+    auto last = system_clock::now();
     while (Terminal::isActive()){
         if(Terminal::getInstance()->linesAvariable() > 0){
             time = 0;
@@ -99,6 +110,11 @@ int main(int argsSize, char** args){
         //Terminal::getInstance()->setPromt("["+getDate()+"] > ");
         usleep(1000);
         time++;
+
+        if(system_clock::now() - last > seconds(1)){
+            last = system_clock::now();
+            writeMessage("Hello world");
+        }
     }
     return 0;
 }

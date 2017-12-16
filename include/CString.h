@@ -1,7 +1,3 @@
-//
-// Created by wolverindev on 04.12.16.
-//
-
 #pragma once
 
 #include <string>
@@ -17,18 +13,18 @@ struct CChar {
     char _char = -1;
     uint16_t attributes = 17;
 
-    int getColor();
-    void setColor(int color);
+    int color();
+    CChar& color(int color);
 
     bool hasStyle(int type);
-    void setStyle(int type, bool active);
+    CChar& setStyle(int type, bool active);
 
     void append(std::stringstream&,CChar*);
 };
 
 class CString{
     public:
-        CString(CString&);
+        CString(const CString&);
         CString();
         CString(std::string);
         CString(std::vector<CChar>&);

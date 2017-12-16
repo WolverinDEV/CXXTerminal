@@ -11,7 +11,7 @@
 #include "../../include/QuickTerminal.h"
 
 using namespace std;
-using namespace Terminal::Grafics::Diagram;
+using namespace Terminal::Graphics::Diagram;
 
 void Graph::addValue(Point value) {
     removeValue(value.x); //Remove old points

@@ -1,36 +1,34 @@
-//
-// Created by wolverindev on 04.12.16.
-//
-
 #include "../../include/CString.h"
 #include "../../include/QuickTerminal.h"
 #include <sstream>
 
 using namespace std;
 
-int CChar::getColor() {
+int CChar::color() {
     return this->attributes & 0x1F;
 }
 
-void CChar::setColor(int color) {
+CChar& CChar::color(int color) {
     uint8_t attr = this->attributes >> 5;
     this->attributes = color | (attr << 5);
+    return *this;
 }
 
 bool CChar::hasStyle(int type) {
     return ((this->attributes >> (type + 5)) & 0x01) == 1;
 }
 
-void CChar::setStyle(int type, bool active) {
+CChar& CChar::setStyle(int type, bool active) {
     if(active)
         this->attributes |= (1U << (type + 5));
     else
         this->attributes &= ~(1U << (type + 5));
+    return *this;
 }
 
 void writeComplete(CChar& c,std::stringstream &ss){
-    if(c.getColor() < 17)
-        ss << "§" << std::hex << c.getColor() << std::dec;
+    if(c.color() < 17)
+        ss << "§" << std::hex << c.color() << std::dec;
     else
         ss << "§r";
     if(c.hasStyle(STYLE_MAGIC))
@@ -51,7 +49,7 @@ void CChar::append(std::stringstream &ss, CChar *prev) {
         writeComplete(*this, ss);
         return;
     }
-    if(prev->getColor() != this->getColor()){
+    if(prev->color() != this->color()){
         writeComplete(*this, ss);
         return;
     }
@@ -108,15 +106,11 @@ void CChar::append(std::stringstream &ss, CChar *prev) {
     ss << this->_char;
 }
 
-CString::CString(CString& other) {
-    for(auto it = other.chars.begin(); it != other.chars.end(); it++)
-        this->chars.push_back(*it);
-    writeMessage("Char size: "+to_string(this->chars.size()));
+CString::CString(const CString& other) {
+    for(auto _char : other.chars) this->chars.push_back(_char);
 }
 
 CString::CString() {}
-
-
 
 CString::CString(std::string str) {
     CChar* last = nullptr;
@@ -153,7 +147,6 @@ CString::CString(std::string str) {
                 else if(code == 'n'){
                     current.setStyle(STYLE_UNDERLINED, true);
                     last = &current;
-                    writeMessage("Set n: "+to_string(current.getColor()));
                     continue;
                 }
                 else if(code == 'o'){
@@ -167,7 +160,6 @@ CString::CString(std::string str) {
                     continue;
                 }
                 else{
-                    writeMessage("Code: "+code);
                     i-=2;
                 }
             }
@@ -178,21 +170,9 @@ CString::CString(std::string str) {
     }
 }
 CString::CString(std::vector<CChar>& chars) {
-    for(auto it = chars.begin(); it != chars.end(); it++)
-        this->chars.push_back(*it);
+    for(auto _char : chars) this->chars.push_back(_char);
 }
 
-/*
-CString& CString::operator+(const CString& other) {
-    writeMessage("Other size: "+to_string(other.chars.size()));
-    writeMessage("Own: "+to_string(chars.size()));
-    CString _new(*this);
-    writeMessage("Copy: "+_new.str());
-    CString& out = _new.operator+=(other);
-    writeMessage("Copy1: "+out.str());
-    return out;
-}
-*/
 
 CString& CString::operator+=(const CString& other) {
     for(auto it = other.chars.begin(); it != other.chars.end(); it++)

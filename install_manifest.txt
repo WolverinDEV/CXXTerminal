@@ -1,2 +1,9 @@
-/usr/local/lib/CXXTerminal/libCXXTerminal.so
+/usr/local/lib/libCXXTerminal.so
+/usr/local/lib/libCXXTerminalStatic.a
+/usr/local/include/CXXTerminal/AdvancedTabCompleter.h
+/usr/local/include/CXXTerminal/ArgumentParser.h
+/usr/local/include/CXXTerminal/CString.h
+/usr/local/include/CXXTerminal/QuickTerminal.h
 /usr/local/include/CXXTerminal/Terminal.h
+/usr/local/include/CXXTerminal/TerminalGrapth.h
+/usr/local/include/CXXTerminal/TerminalTable.h

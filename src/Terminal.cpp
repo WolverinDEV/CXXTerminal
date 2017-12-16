@@ -1,9 +1,4 @@
-//
-// Created by wolverindev on 12.11.16.
-//
-
 #include "../include/Terminal.h"
-#include "../include/QuickTerminal.h"
 
 #include <sstream>
 #include <iostream>
@@ -13,13 +8,18 @@
 #include <algorithm>
 #include <sys/time.h>
 #include <cstring>
+#include <cxxabi.h>
+#include <stdlib.h>
+#include <cassert>
+#include <utility>
 
+using namespace std;
 
 /**
  * Quick terminal for instand access
  */
 
-void writeMessage(std::string message){
+void writeMessage(const std::string &message){
     if(Terminal::isActive())
         Terminal::getInstance()->writeMessage(message);
     else
@@ -45,19 +45,17 @@ Terminal::TerminalImpl* Terminal::getInstance() {
 void removeNonblock(){
 #ifndef TERMINAL_NON_BLOCK
     tcsetattr(0, TCSANOW, &orig_termios);
-    std::cout << ANSI_RESET"\r";
+    std::cout << ANSI_RESET;
     std::cout.flush();
 #endif
 }
 
 void initNonblock(){
 #ifndef TERMINAL_NON_BLOCK
-    struct termios new_termios;
+    termios new_termios{};
 
     tcgetattr(0, &orig_termios);
     memcpy(&new_termios, &orig_termios, sizeof(new_termios));
-
-    atexit(removeNonblock);
 
     new_termios.c_lflag &= ~ICANON;
     new_termios.c_lflag &= ~ECHO;
@@ -66,31 +64,24 @@ void initNonblock(){
     new_termios.c_cc[VTIME] = 0;
 
     tcsetattr(0, TCSANOW, &new_termios);
+
+    atexit(removeNonblock);
 #endif
 }
 
-void* terminalReaderThread(void* args){
-    ReaderThreadArgs* handle = (ReaderThreadArgs*) args;
-
-    int current;
-    while (std::cin && *(handle->handlePtr) != nullptr) {
-        current = handle->readFunction();
-        if(current > 0){
-            handle->readedFunction(current);
-            continue;
-        }
-        usleep(1000);
-    }
-}
-
 void Terminal::setup() {
-    terminalInstance = new TerminalImpl;
+    assert(!terminalInstance);
+
+    terminalInstance = new TerminalImpl();
     initNonblock();
     terminalInstance->startReader();
 }
 
 void Terminal::uninstall() {
+    assert(terminalInstance);
+
     terminalInstance->stopReader();
+    if(!terminalInstance->getPromt().empty()) cout << "\r" << flush;
     delete terminalInstance;
     terminalInstance = nullptr;
     removeNonblock();
@@ -102,26 +93,25 @@ bool Terminal::isActive() {
 
 int TerminalImpl::startReader() {
     if(this->readerThread == nullptr){
-        this->readerThread = new pthread_t;
-
-        ReaderThreadArgs* ptrArgs = new ReaderThreadArgs;
-        ReaderThreadArgs& initArgs = *ptrArgs;
-        initArgs.handlePtr = &terminalInstance;
-        initArgs.readFunction = [&](){
-            return this->readNextByte();
-        };
-        initArgs.readedFunction = [&](int character){
-            this->charReaded(character);
-        };
-        return pthread_create(readerThread, nullptr, terminalReaderThread, ptrArgs);
+        this->running = true;
+        this->readerThread = new std::thread([&](){
+            while(this->running){
+                auto readed = this->readNextByte();
+                if(readed == -1) continue;
+                this->charReaded(readed);
+            }
+        });
+        return 1;
     }
     return -1;
 }
 
 int TerminalImpl::stopReader() {
     if(this->readerThread != nullptr){
-        pthread_cancel(*(this->readerThread));
-        delete(this->readerThread);
+        this->running = false;
+        if(this->readerThread->joinable())
+            this->readerThread->join();
+        delete this->readerThread;
         this->readerThread = nullptr;
         return 0;
     }
@@ -129,90 +119,114 @@ int TerminalImpl::stopReader() {
 }
 
 int TerminalImpl::readNextByte() {
-    int readed;
-    while ((readed = getchar()) < 1){
+    int read;
+    while(this->running){
+        read = getchar();
+        if(read >= 0) return read;
         usleep(1000);
     }
-    return readed;
-}
-
-inline void split(const std::string &s, std::string delim, std::vector<std::string> &elems) {
-    auto start = 0U;
-    auto end = s.find(delim);
-    while (end != std::string::npos)
-    {
-        elems.push_back(s.substr(start, end - start));
-        start = end + delim.length();
-        end = s.find(delim, start);
-    }
-    elems.push_back(s.substr(start, end - start));
+    return -1;
 }
 
 std::string TerminalImpl::parseCharacterCodes(std::string in) {
-    std::stringstream stream;
-    std::vector<std::string> parts;
-    split(in, "§", parts);
-
-    bool first = true;
-    for(std::vector<std::string>::iterator it = parts.begin(); it != parts.end();it++) {
-        int index = 0;
-        if(!first){
-            index = 1;
-            std::string first = (*it).substr(0,1);
-            switch (tolower(first[0])){
-                case '0':
-                    stream << ANSI_BLACK; break;
-                case '1':
-                    stream << ANSI_BLUE; break;
-                case '2':
-                    stream << ANSI_GREEN; break;
-                case '3':
-                    stream << ANSI_CYAN; break;
-                case '4':
-                    stream << ANSI_RED; break;
-                case '5':
-                    stream << ANSI_PURPLE; break;
-                case '6':
-                    stream << ANSI_BROWN; break;
-                case '7':
-                    stream << ANSI_GRAY; break;
-                case '8':
-                    stream << ANSI_DARK_GREY; break;
-                case '9':
-                    stream << ANSI_LIGHT_BLUE; break;
-                case 'a':
-                    stream << ANSI_LIGHT_GREEN; break;
-                case 'b':
-                    stream << ANSI_LIGHT_CYAN; break;
-                case 'c':
-                    stream << ANSI_LIGHT_RED; break;
-                case 'd':
-                    stream << ANSI_LIGHT_PURPLE; break;
-                case 'e':
-                    stream << ANSI_YELLOW; break;
-                case 'f':
-                    stream << ANSI_WHITE; break;
-                case 'k': break;
-                case 'n':
-                    stream << ANSI_UNDERLINE; break;
-                case 'm':
-                    stream << ANSI_UNDERLINE << ANSI_REVERSE; break;
-                case 'o': break;
-                case 'l':
-                    stream << ANSI_BOLD; break;
-                case 'r':
-                    stream << ANSI_RESET; break;
-                default:
-                    stream << "§";
-                    index = 0;
-            }
+    stringstream out;
+    size_t index = 0;
+    size_t oldIndex = 0;
+    while((index = in.find('§', oldIndex)) > 0 && index < in.size()){
+        out << in.substr(oldIndex, index - oldIndex - 1);
+        switch (tolower(in.substr(index + 1, 1)[0])){
+            case '0':
+                out << ANSI_BLACK; break;
+            case '1':
+                out << ANSI_BLUE; break;
+            case '2':
+                out << ANSI_GREEN; break;
+            case '3':
+                out << ANSI_CYAN; break;
+            case '4':
+                out << ANSI_RED; break;
+            case '5':
+                out << ANSI_PURPLE; break;
+            case '6':
+                out << ANSI_BROWN; break;
+            case '7':
+                out << ANSI_GRAY; break;
+            case '8':
+                out << ANSI_DARK_GREY; break;
+            case '9':
+                out << ANSI_LIGHT_BLUE; break;
+            case 'a':
+                out << ANSI_LIGHT_GREEN; break;
+            case 'b':
+                out << ANSI_LIGHT_CYAN; break;
+            case 'c':
+                out << ANSI_LIGHT_RED; break;
+            case 'd':
+                out << ANSI_LIGHT_PURPLE; break;
+            case 'e':
+                out << ANSI_YELLOW; break;
+            case 'f':
+                out << ANSI_WHITE; break;
+            case 'k': break;
+            case 'n':
+                out << ANSI_UNDERLINE; break;
+            case 'm':
+                out << ANSI_UNDERLINE << ANSI_REVERSE; break;
+            case 'o': break;
+            case 'l':
+                out << ANSI_BOLD; break;
+            case 'r':
+                out << ANSI_RESET; break;
+            default:
+                out << "§";
+                index -= 1;
         }
-        else
-            first = false;
-        stream << (*it).substr(index);
+        index += 2;
+        oldIndex = index;
     }
-    stream << ANSI_RESET;
-    return stream.str();
+    out << in.substr(oldIndex);
+    return out.str();
+}
+
+std::string TerminalImpl::stripCharacterCodes(std::string in) {
+    stringstream out;
+    size_t index = 0;
+    size_t oldIndex = 0;
+    while((index = in.find('§', oldIndex)) > 0 && index < in.size()){
+        out << in.substr(oldIndex, index - oldIndex - 1);
+        switch (tolower(in.substr(index + 1, 1)[0])){
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            case 'a':
+            case 'b':
+            case 'c':
+            case 'd':
+            case 'e':
+            case 'f':
+            case 'k':
+            case 'n':
+            case 'm':
+            case 'o':
+            case 'l':
+            case 'r':
+                break;
+            default:
+                out << "§";
+                index -= 1;
+        }
+        index += 2;
+        oldIndex = index;
+    }
+    out << in.substr(oldIndex);
+    return out.str();
 }
 
 void TerminalImpl::printCommand(std::string command) {
@@ -221,33 +235,40 @@ void TerminalImpl::printCommand(std::string command) {
 }
 
 void TerminalImpl::setPromt(std::string promt) {
-    this->promt = promt;
+    this->promt = parseCharacterCodes(std::move(promt));
     this->redrawLine();
 }
 
 void TerminalImpl::redrawLine(bool lockMutex) {
-    if(lockMutex)
-        pthread_mutex_lock(&(this->mutex));
-    std::stringstream ss;
-    ss << "\r" << promt << std::string(&(cursorBuffer[0]), cursorBuffer.size());
-    int size = ss.str().length();
-    int asize = size - 1;
+    try {
+        if(lockMutex) pthread_mutex_lock(&mutex);
+        std::stringstream ss;
+        ss << "\r" << promt << std::string(&(cursorBuffer[0]), cursorBuffer.size());
+        auto size = ss.str().length();
+        auto asize = size - 1;
+        auto moveBack = asize - this->cursorPosition - this->promt.size();
 
-    int moveBack = asize - this->cursorPosition - this->promt.size();
+        ss << "\x1B[K";
+        if(moveBack > 0){
+            ss << "\x1B[" + std::to_string(moveBack)+"D";
+        }
 
-    ss << "\x1B[K";
-    if(moveBack > 0){
-        ss << "\x1B[" + std::to_string(moveBack)+"D";
+        std::cout << ANSI_RESET << ss.str();
+        std::cout.flush();
+
+        if(lockMutex) pthread_mutex_unlock(&mutex);
+    } catch(const abi::__forced_unwind&){
+        if(lockMutex) pthread_mutex_unlock(&mutex);
+        throw;
+    } catch (...){
+        if(lockMutex) pthread_mutex_unlock(&mutex);
+        throw;
     }
-
-    std::cout << ANSI_RESET << ss.str();
-    std::cout.flush();
-
-    if(lockMutex)
-        pthread_mutex_unlock(&(this->mutex));
 }
 
 void TerminalImpl::writeMessage(std::string message, bool noCharacterCodes) {
+    int oldCancelState;
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldCancelState);
     try {
         pthread_mutex_lock(&mutex);
         if(!noCharacterCodes)
@@ -256,11 +277,13 @@ void TerminalImpl::writeMessage(std::string message, bool noCharacterCodes) {
             std::cout << ANSI_RESET"\r" << message << "\x1B[K" << std::endl;
         redrawLine(false);
         pthread_mutex_unlock(&mutex);
-    }catch (...){
+    } catch (...){
         std::cout << "writeMessage() error" << std::endl;
         pthread_mutex_unlock(&mutex);
+        if(oldCancelState != PTHREAD_CANCEL_DISABLE) pthread_setcancelstate(oldCancelState, nullptr);
         throw;
     }
+    if(oldCancelState != PTHREAD_CANCEL_DISABLE) pthread_setcancelstate(oldCancelState, nullptr);
 }
 
 template <typename T>
@@ -404,12 +427,12 @@ inline uint64_t getCurrentTimeMillis(){
 
 std::string TerminalImpl::getNextLine(){
     pthread_mutex_lock(&(this->bufferMutex));
-    int size = this->lineBuffer.size();
+    auto size = this->lineBuffer.size();
     if(size > 0){
-        auto line = this->lineBuffer.begin();
-        this->lineBuffer.erase(line);
+        auto line = *this->lineBuffer.begin();
+        this->lineBuffer.erase(this->lineBuffer.begin());
         pthread_mutex_unlock(&(this->bufferMutex));
-        return std::string(line.operator*().c_str());
+        return line;
     }
     pthread_mutex_unlock(&(this->bufferMutex));
     return "";
@@ -422,17 +445,9 @@ int TerminalImpl::linesAvariable() {
     return size;
 }
 
-std::string TerminalImpl::readLine() {
-    return TerminalImpl::readLine("");
-}
-
-std::string TerminalImpl::readLine(std::string promt) {
-    return TerminalImpl::readLine(promt, -1);
-}
-
-std::string TerminalImpl::readLine(std::string promt, int timeout) {
+std::string TerminalImpl::readLine(const std::string& promt, int timeout) {
     uint64_t current = getCurrentTimeMillis();
-    if(timeout > 0){
+    if(timeout >= 0){
         timespec spec = {timeout / 1000, (timeout % 1000) * 1000};
         int state = pthread_mutex_timedlock(&(this->readlineMutex), &spec);
         if(state != 0){
@@ -441,8 +456,8 @@ std::string TerminalImpl::readLine(std::string promt, int timeout) {
     } else
         pthread_mutex_lock(&(this->readlineMutex));
     this->setPromt(promt);
-    std::string currentLine = "";
-    while ((currentLine = getNextLine()) == "" && (timeout <= 0 || current + timeout > getCurrentTimeMillis())){
+    std::string currentLine;
+    while ((currentLine = getNextLine()).empty() && (timeout < 0 || current + timeout > getCurrentTimeMillis())){
         usleep(1000);
     }
     pthread_mutex_unlock(&(this->readlineMutex));

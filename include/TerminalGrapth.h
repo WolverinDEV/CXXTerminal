@@ -9,7 +9,7 @@
 #include "CString.h"
 
 namespace Terminal {
-    namespace Grafics {
+    namespace Graphics {
         namespace Diagram {
             struct Point {
                 double x;

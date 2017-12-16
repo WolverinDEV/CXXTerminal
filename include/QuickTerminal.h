@@ -1,13 +1,6 @@
-//
-// Created by wolverindev on 21.11.16.
-//
-
-#ifndef CXXTERMINAL_QUICKTERMINAL_H
-#define CXXTERMINAL_QUICKTERMINAL_H
+#pragma once
 
 #include "Terminal.h"
 
-extern void writeMessage(std::string message);
+extern void writeMessage(const std::string& message);
 extern bool isTerminalEnabled();
-
-#endif //CXXTERMINAL_QUICKTERMINAL_H

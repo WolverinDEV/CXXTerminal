@@ -9,12 +9,12 @@
 
 using namespace std;
 namespace Terminal {
-    inline void split(const string &s, string delim, vector<string> &elems) {
+    inline void split(const string &s, const string& delim, vector<string> &elems) {
         auto start = 0U;
         auto end = s.find(delim);
         while (end != std::string::npos) {
             elems.push_back(s.substr(start, end - start));
-            start = end + delim.length();
+            start = static_cast<unsigned int>(end + delim.length());
             end = s.find(delim, start);
         }
         elems.push_back(s.substr(start, end - start));
@@ -27,8 +27,8 @@ namespace Terminal {
 
             vector<DependCompleter *> completer = getAvaribilities(args/*, spaces*/);
 
-            for (auto it = completer.begin(); it != completer.end(); it++) {
-                completions.push_back((*it)->expected);
+            for (auto& it : completer) {
+                completions.push_back(it->expected);
             }
         };
     }
@@ -127,6 +127,7 @@ namespace Terminal {
         for (auto it = this->next.begin(); it != this->next.end(); it++)
             if (dynamic_cast<WildcardCompleter *>(*it) != nullptr) {
                 this->next.erase(std::find(this->next.begin(), this->next.end(), *it));
+                (*it)->root = nullptr;
                 delete *it; //Automaticly get removed
                 return true;
             }
