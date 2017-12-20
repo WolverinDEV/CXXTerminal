@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace Terminal {
+namespace terminal {
         class DependCompleter {
                 friend class AvTabCompleter;
             public:
@@ -51,7 +51,9 @@ namespace Terminal {
                 }
             private:
                 TabCompleter baseCompleter = NULL;
-
-                void pushbackArg(int index, std::string& str);
         };
 }
+
+#ifdef SUPPORT_LEGACY
+    namespace Termianl = terminal;
+#endif

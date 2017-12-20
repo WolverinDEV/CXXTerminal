@@ -14,7 +14,7 @@
 
 using namespace std;
 
-string getDate(){
+string currentDate(){
     time_t rawtime;
     struct tm * timeinfo;
     char buffer[80];
@@ -31,20 +31,18 @@ void handleLine(std::string& message){
     string lmessage = string(message);
     std::transform(lmessage.begin(), lmessage.end(), lmessage.begin(), ::tolower);
 
-    Terminal::getInstance()->writeMessage("Having message: "+message);
+    terminal::instance()->writeMessage("Having message: "+message);
     if(lmessage == "exit" || lmessage == "q" || lmessage == "quit"){
-        Terminal::getInstance()->writeMessage("§aExit program");
-        Terminal::uninstall();
+        terminal::instance()->writeMessage("§aExit program");
+        terminal::uninstall();
     }
 }
 
-using namespace Terminal;
+using namespace terminal;
 using namespace std::chrono;
 
 int main(int argsSize, char** args){
-
-    Terminal::setup();
-
+    terminal::install();
     /*
     ArgumentParser parser;
     int number;
@@ -62,9 +60,9 @@ int main(int argsSize, char** args){
     cmp.wildcard()->parameter("xxxx");
     cmp.unregisterWildcard();
     cmp.unregister("hello");
-    Terminal::getInstance()->addTabCompleter(cmp.getBasedCompleter());
+    terminal::instance()->addTabCompleter(cmp.getBasedCompleter());
 
-    Terminal::getInstance()->writeMessage("§aHello §bworld § X §a");
+    terminal::instance()->writeMessage("§aHello §bworld § X §a");
 
     Terminal::Graphics::Diagram::Graph table;
     table.dchar._char = '#';
@@ -89,31 +87,31 @@ int main(int argsSize, char** args){
     grapth.xAxisName = CString("§cHello :D");
 
     vector<string> vec = grapth.buildLine(120, 15, 4);
-    for(auto it = vec.begin(); it != vec.end();it++)
-        writeMessage(*it);
+    for (auto &it : vec)
+        writeMessage(it);
     delete out;
 
     int time = 0;
 
     auto last = system_clock::now();
-    while (Terminal::isActive()){
-        if(Terminal::getInstance()->linesAvariable() > 0){
+    while (terminal::active()){
+        if(terminal::instance()->linesAvailable() > 0){
             time = 0;
-            string message = Terminal::getInstance()->readLine();
+            string message = terminal::instance()->readLine();
             handleLine(message);
             continue;
         }
 
-        std::string stime = to_string(time);
+        std::string stime = to_string(time / 1000);
 
-        Terminal::getInstance()->setPromt("["+string(time > 10*1000 ? time > 30*1000 ? ANSI_RED : ANSI_BROWN : ANSI_GREEN)+stime+ANSI_RESET"] > ");
-        //Terminal::getInstance()->setPromt("["+getDate()+"] > ");
+        terminal::instance()->setPromt("["+string(time > 10*1000 ? time > 30*1000 ? ANSI_RED : ANSI_BROWN : ANSI_GREEN)+stime+ANSI_RESET"] > ");
+        //terminal::instance()->setPromt("["+getDate()+"] > ");
         usleep(1000);
         time++;
 
         if(system_clock::now() - last > seconds(1)){
             last = system_clock::now();
-            writeMessage("Hello world");
+            //writeMessage("Hello world");
         }
     }
     return 0;

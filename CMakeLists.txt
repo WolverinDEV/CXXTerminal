@@ -8,18 +8,26 @@ add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 #link pthread
 link_libraries(pthread)
 
+set(SRC_FILES
+		src/utils/CString.cpp
+		src/utils/Grapth.cpp
+
+		src/ArgumentParser.cpp
+		src/TabCompleter.cpp
+		src/Terminal.cpp
+		src/TerminalAnsi.cpp
+		src/TerminalIO.cpp)
+
 # Find library headers
 file(GLOB HEADERS include/*.h)
-# Find source files
-file(GLOB_RECURSE SOURCES src/*.cpp)
 # Find source files
 file(GLOB TEST test/*)
 
 message("Src: ${HEADERS} - ${SOURCES} - ${TEST}")
 
 # Create shared library
-add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
-add_library(${PROJECT_NAME}Static STATIC ${SOURCES} ${HEADERS})
+add_library(${PROJECT_NAME} SHARED ${SRC_FILES} ${HEADERS})
+add_library(${PROJECT_NAME}Static STATIC ${SRC_FILES} ${HEADERS})
 
 # Install library
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
@@ -27,4 +35,5 @@ install(TARGETS ${PROJECT_NAME}Static DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 install(FILES ${HEADERS} DESTINATION include/${PROJECT_NAME})
 
 #Create test
-add_executable(${PROJECT_NAME}Test ${TEST} ${HEADERS} ${SOURCES})
+add_executable(${PROJECT_NAME}Test ${TEST} ${HEADERS} ${SRC_FILES})
+target_link_libraries(${PROJECT_NAME}Test event)
