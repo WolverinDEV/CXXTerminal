@@ -1,16 +1,10 @@
-//
-// Created by wolverindev on 21.11.16.
-//
-
 #include <string>
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
-#include <unistd.h>
 #include "../include/QuickTerminal.h"
 #include "../include/AdvancedTabCompleter.h"
 #include "../include/TerminalGrapth.h"
-#include "../include/ArgumentParser.h"
 
 using namespace std;
 
@@ -43,6 +37,13 @@ using namespace std::chrono;
 
 int main(int argsSize, char** args){
     terminal::install();
+
+    terminal::instance()->writeMessage(terminal::stripCharacterCodes("Hello &bWorld", "&"));
+    terminal::instance()->writeMessage(terminal::stripCharacterCodes("Hello §bWorld", "§"));
+
+    terminal::uninstall();
+
+    return 0;
     /*
     ArgumentParser parser;
     int number;
@@ -106,7 +107,7 @@ int main(int argsSize, char** args){
 
         terminal::instance()->setPromt("["+string(time > 10*1000 ? time > 30*1000 ? ANSI_RED : ANSI_BROWN : ANSI_GREEN)+stime+ANSI_RESET"] > ");
         //terminal::instance()->setPromt("["+getDate()+"] > ");
-        usleep(1000);
+        std::this_thread::sleep_for(std::chrono::microseconds(123));
         time++;
 
         if(system_clock::now() - last > seconds(1)){

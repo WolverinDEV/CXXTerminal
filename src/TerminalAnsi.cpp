@@ -7,13 +7,15 @@
 using namespace std;
 
 using namespace terminal;
-string Impl::parseCharacterCodes(string in) {
+string terminal::parseCharacterCodes(string in, std::string characterCode) {
+    if(characterCode.empty()) characterCode += '§';
+
     stringstream out;
     size_t index = 0;
     size_t oldIndex = 0;
-    while((index = in.find('§', oldIndex)) > 0 && index < in.size()){
-        out << in.substr(oldIndex, index - oldIndex - 1);
-        switch (tolower(in.substr(index + 1, 1)[0])){
+    while((index = in.find(characterCode, oldIndex)) > 0 && index < in.size()){
+        out << in.substr(oldIndex, index - oldIndex);
+        switch (tolower(in.substr(characterCode.length() + 1, 1)[0])){
             case '0':
                 out << ANSI_BLACK; break;
             case '1':
@@ -60,20 +62,22 @@ string Impl::parseCharacterCodes(string in) {
                 out << "§";
                 index -= 1;
         }
-        index += 2;
+        index += characterCode.length() + 1;
         oldIndex = index;
     }
     out << in.substr(oldIndex);
     return out.str();
 }
 
-std::string Impl::stripCharacterCodes(std::string in) {
+std::string terminal::stripCharacterCodes(std::string in, std::string characterCode) {
+    if(characterCode.empty()) characterCode = "§";
+
     stringstream out;
     size_t index = 0;
     size_t oldIndex = 0;
-    while((index = in.find('§', oldIndex)) > 0 && index < in.size()){
-        out << in.substr(oldIndex, index - oldIndex - 1);
-        switch (tolower(in.substr(index + 1, 1)[0])){
+    while((index = in.find(characterCode, oldIndex)) > 0 && index < in.size()){
+        out << in.substr(oldIndex, index - oldIndex);
+        switch (tolower(in.substr(characterCode.length() + 1, 1)[0])){
             case '0':
             case '1':
             case '2':
@@ -98,10 +102,10 @@ std::string Impl::stripCharacterCodes(std::string in) {
             case 'r':
                 break;
             default:
-                out << "§";
+                out << characterCode;
                 index -= 1;
         }
-        index += 2;
+        index += characterCode.length() + 1;
         oldIndex = index;
     }
     out << in.substr(oldIndex);

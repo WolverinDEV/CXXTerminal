@@ -32,10 +32,10 @@ bool isTerminalEnabled(){
  */
 
 struct termios orig_termios;
-Impl* terminalInstance = nullptr;
+impl* terminalInstance = nullptr;
 
 
-terminal::Impl* terminal::instance() {
+terminal::impl* terminal::instance() {
     return terminalInstance;
 }
 
@@ -68,7 +68,7 @@ void initNonblock(){
 void terminal::install() {
     assert(!terminalInstance);
 
-    terminalInstance = new Impl();
+    terminalInstance = new impl();
     initNonblock();
     terminalInstance->startReader();
 }
@@ -87,19 +87,19 @@ bool terminal::active() {
     return terminalInstance != nullptr;
 }
 
-void Impl::printCommand(std::string command) {
+void impl::printCommand(std::string command) {
     std::cout << "\x1B[" << command;
     std::cout.flush();
 }
 
-void Impl::setPromt(std::string promt) {
+void impl::setPromt(std::string promt) {
     auto str = parseCharacterCodes(std::move(promt));
     if(this->promt == str) return;
     this->promt = str;
     this->redrawLine();
 }
 
-void Impl::redrawLine(bool lockMutex) {
+void impl::redrawLine(bool lockMutex) {
     if(lockMutex){
         lock_guard<std::mutex> lock(this->mutex);
         this->redrawLine(false);
@@ -119,7 +119,7 @@ void Impl::redrawLine(bool lockMutex) {
     std::cout << ANSI_RESET << ss.str() << flush;
 }
 
-void Impl::writeMessage(std::string message, bool noCharacterCodes) {
+void impl::writeMessage(std::string message, bool noCharacterCodes) {
     lock_guard<std::mutex> lock(this->mutex);
 
     if(!noCharacterCodes)
@@ -129,7 +129,7 @@ void Impl::writeMessage(std::string message, bool noCharacterCodes) {
     redrawLine(false);
 }
 
-std::string Impl::getNextLine(){
+std::string impl::getNextLine(){
     lock_guard<std::mutex> lock(this->bufferMutex);
 
     auto size = this->lineBuffer.size();
@@ -141,28 +141,28 @@ std::string Impl::getNextLine(){
     return "";
 }
 
-size_t Impl::linesAvailable() {
+size_t impl::linesAvailable() {
     lock_guard<std::mutex> lock(this->bufferMutex);
     return this->lineBuffer.size();
 }
 
-std::string Impl::readLine(const std::string& promt, time_point<system_clock> timeout) {
+std::string impl::readLine(const std::string& promt, time_point<system_clock> timeout) {
     bool havingTimeout = timeout.time_since_epoch().count() == 0;
 
     std::string currentLine;
     while ((currentLine = getNextLine()).empty() && (havingTimeout && system_clock::now() < timeout)){
-        usleep(1000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     return currentLine;
 }
 
-std::string Impl::getCursorBuffer() {
+std::string impl::getCursorBuffer() {
     lock_guard<std::mutex> lock(this->bufferMutex);
 
     return std::string(&(this->cursorBuffer[0]), cursorBuffer.size());
 }
 
-void Impl::setCursorBuffer(std::string buffer) {
+void impl::setCursorBuffer(std::string buffer) {
     lock_guard<std::mutex> lock(this->bufferMutex);
 
     int64_t oldSize = this->cursorBuffer.size();
@@ -183,11 +183,11 @@ void Impl::setCursorBuffer(std::string buffer) {
     this->redrawLine(false);
 }
 
-size_t Impl::getCursorPosition() {
+size_t impl::getCursorPosition() {
     return this->cursorPosition;
 }
 
-void Impl::setCursorPosition(size_t index) { //TODO bounds check!
+void impl::setCursorPosition(size_t index) { //TODO bounds check!
     ssize_t move = index - this->cursorPosition ;
     if(move < 0){
         std::cout << "\x1B[" + std::to_string(-move)+"D";
@@ -199,13 +199,13 @@ void Impl::setCursorPosition(size_t index) { //TODO bounds check!
     this->cursorPosition = index;
 }
 
-void Impl::addTabCompleter(TabCompleter* tabCompleter) {
+void impl::addTabCompleter(TabCompleter* tabCompleter) {
     lock_guard<std::mutex> lock(this->tabCompleterLock);
 
     tabCompleters.push_back(tabCompleter);
 }
 
-void Impl::removeTabCompleter(TabCompleter* tabCompleter) {
+void impl::removeTabCompleter(TabCompleter* tabCompleter) {
     lock_guard<std::mutex> lock(this->tabCompleterLock);
 
     auto it = std::find(tabCompleters.begin(),tabCompleters.end(), tabCompleter);

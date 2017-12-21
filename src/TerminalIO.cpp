@@ -24,7 +24,7 @@ std::string join(std::vector<T> elm,const JoinFunction<T>& toStringFunc){
 }
 
 
-int Impl::startReader() {
+int impl::startReader() {
     assert(!this->readerThread);
     this->running = true;
 
@@ -33,13 +33,14 @@ int Impl::startReader() {
         while(this->running){
             auto readed = this->readNextByte();
             if(readed == -1) continue;
-            this->charRead(readed);
+            this->rdbuf += (char) readed;
+            while(this->handleRead());
         }
     });
     return 0;
 #else
     this->eventLoop = event_base_new();
-    this->readEvent = event_new(this->eventLoop, STDIN_FILENO, EV_READ | EV_PERSIST, [](int a, short b, void* c){ ((Impl*) c)->handleInput(a, b, c); }, this);
+    this->readEvent = event_new(this->eventLoop, STDIN_FILENO, EV_READ | EV_PERSIST, [](int a, short b, void* c){ ((impl*) c)->handleInput(a, b, c); }, this);
     event_add(readEvent, nullptr);
 
     this->readerThread = new std::thread([&](){
@@ -50,7 +51,7 @@ int Impl::startReader() {
     return -1;
 }
 
-int Impl::stopReader() {
+int impl::stopReader() {
     assert(this->readerThread);
     this->running = false;
 
@@ -88,13 +89,13 @@ int Impl::readNextByte() {
     while(this->running){
         read = getchar();
         if(read >= 0) return read;
-        usleep(1000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     return -1;
 }
 #else
 #define RD_BUFFER_SIZE 1024
-void Impl::handleInput(int fd, short, void *) {
+void impl::handleInput(int fd, short, void *) {
     char buffer[RD_BUFFER_SIZE];
     auto read = ::read(fd, buffer, RD_BUFFER_SIZE);
     if(read < 0){
@@ -108,7 +109,7 @@ void Impl::handleInput(int fd, short, void *) {
 }
 #endif
 
-bool Impl::handleRead() {
+bool impl::handleRead() {
     lock_guard<::mutex> rdBufLock(this->rdbufLock);
     if(this->rdbuf.empty()) return false;
 

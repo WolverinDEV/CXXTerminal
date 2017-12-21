@@ -1,5 +1,7 @@
 #pragma once
 
+#define USE_LIBEVENT
+
 #include "AnsiCodes.h"
 
 #include <string>
@@ -8,10 +10,11 @@
 #include <thread>
 #include <mutex>
 #include <deque>
-#include <event.h>
 
+#ifdef USE_LIBEVENT
+    #include <event.h>
+#endif
 
-#define USE_LIBEVENT
 
 namespace terminal {
     typedef std::function<void(std::string, std::string, std::vector<std::string> &)> TabCompleter;
@@ -26,14 +29,13 @@ namespace terminal {
     extern void uninstall();
     extern bool active();
 
-    class Impl;
-    extern Impl* instance();
+    class impl;
+    extern impl* instance();
 
-    class Impl {
-        public:
-            static std::string parseCharacterCodes(std::string in);
-            static std::string stripCharacterCodes(std::string in);
+    extern std::string parseCharacterCodes(std::string in, std::string characterCode = "");
+    extern std::string stripCharacterCodes(std::string in, std::string characterCode = "");
 
+    class impl {
         public:
             void redrawLine(bool lockMutex = true);
 

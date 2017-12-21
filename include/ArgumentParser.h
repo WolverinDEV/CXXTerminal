@@ -36,7 +36,7 @@ namespace ArgumentTypes {
             BoolArgument(string shortArg, string longArg, BoolValidator validator, bool* var, string description) : Argument(shortArg, longArg, description, [var, longArg, validator](string value){
                 std::transform(value.begin(), value.end(), value.begin(), ::tolower);
 
-                bool number = (value.compare("true") == 0 || value.compare("1") == 0 || value.compare("t") == 0) ? true : false;
+                bool number = value.compare("true") == 0 || value.compare("1") == 0 || value.compare("t") == 0;
                 if(!validator(&number)){
 #ifdef DEBUG
                     writeMessage("[DEBUG] Dont use val "+to_string(number)+" for "+longArg);
