@@ -87,7 +87,7 @@ bool terminal::active() {
     return terminalInstance != nullptr;
 }
 
-void impl::printCommand(std::string command) {
+void impl::printAnsiCommand(std::string command) {
     std::cout << "\x1B[" << command;
     std::cout.flush();
 }

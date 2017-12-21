@@ -3,19 +3,20 @@
 //
 #include "../include/Terminal.h"
 #include <sstream>
+#include <iostream>
 
 using namespace std;
 
 using namespace terminal;
 string terminal::parseCharacterCodes(string in, std::string characterCode) {
-    if(characterCode.empty()) characterCode += '§';
+    if(characterCode.empty()) characterCode += "§";
 
     stringstream out;
     size_t index = 0;
     size_t oldIndex = 0;
     while((index = in.find(characterCode, oldIndex)) > 0 && index < in.size()){
         out << in.substr(oldIndex, index - oldIndex);
-        switch (tolower(in.substr(characterCode.length() + 1, 1)[0])){
+        switch (tolower(in[index + characterCode.length()])){
             case '0':
                 out << ANSI_BLACK; break;
             case '1':
@@ -77,7 +78,7 @@ std::string terminal::stripCharacterCodes(std::string in, std::string characterC
     size_t oldIndex = 0;
     while((index = in.find(characterCode, oldIndex)) > 0 && index < in.size()){
         out << in.substr(oldIndex, index - oldIndex);
-        switch (tolower(in.substr(characterCode.length() + 1, 1)[0])){
+        switch (tolower(in[index + characterCode.length()])){
             case '0':
             case '1':
             case '2':

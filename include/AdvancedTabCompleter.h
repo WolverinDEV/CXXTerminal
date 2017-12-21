@@ -5,55 +5,54 @@
 #include <vector>
 
 namespace terminal {
-        class DependCompleter {
-                friend class AvTabCompleter;
-            public:
-                DependCompleter(std::string, bool ignoreCase = true);
-                DependCompleter(DependCompleter*,std::string, bool ignoreCase = true);
-                ~DependCompleter();
+    namespace tab {
+        class completer {
+            friend class CompleterBase;
+        public:
+            completer(std::string word, bool ignoreCase = true);
+            completer(completer* before,std::string word, bool ignoreCase = true);
+            ~completer();
 
-                DependCompleter* parameter(std::string parameter);
-                bool unregister(std::string parameter);
+            completer* parameter(std::string parameter);
+            bool unregister(std::string parameter);
 
-                bool registerTabCompleter(DependCompleter* completer);
-                bool unregisterTabCompleter(DependCompleter* completer);
+            bool registerTabCompleter(completer* completer);
+            bool unregisterTabCompleter(completer* completer);
 
-                DependCompleter* wildcard();
-                bool unregisterWildcard();
+            completer* wildcard();
+            bool unregisterWildcard();
 
-                virtual bool accept(std::string in);
-                virtual bool acceptExact(std::string in);
+            virtual bool accept(std::string in);
+            virtual bool acceptExact(std::string in);
 
-                std::vector<DependCompleter*> getNext();
-                std::string expected;
-            private:
-                DependCompleter* root;
-                std::vector<DependCompleter*> next;
-
-                bool ignoreCase;
-        };
-        class WildcardCompleter : public DependCompleter {
-            public:
-                WildcardCompleter(DependCompleter*);
-
-                virtual bool accept(std::string in) override;
-
-                virtual bool acceptExact(std::string in) override;
+            std::vector<completer*> next();
+            std::string expected;
+        private:
+            completer* root = nullptr;
+            bool ignoreCase = true;
+            std::vector<completer*> _next;
         };
 
-        class AvTabCompleter : public DependCompleter{
-            public:
-                AvTabCompleter();
-                std::vector<DependCompleter*> getAvaribilities(std::vector<std::string>& args/*, int index*/);
+        class wildcard : public completer {
+        public:
+            wildcard(completer*);
 
-                TabCompleter* getBasedCompleter(){
-                    return &this->baseCompleter;
-                }
-            private:
-                TabCompleter baseCompleter = NULL;
+            virtual bool accept(std::string in) override;
+            virtual bool acceptExact(std::string in) override;
         };
+
+        class CompleterBase : public completer {
+        public:
+            CompleterBase();
+            std::vector<completer*> availabilities(std::vector<std::string> &args);
+
+            TabCompleter* getBasedCompleter(){ return &this->baseCompleter; }
+        private:
+            TabCompleter baseCompleter;
+        };
+    }
 }
 
 #ifdef SUPPORT_LEGACY
-    namespace Termianl = terminal;
+    namespace Termianl = terminal::tab;
 #endif

@@ -1,5 +1,6 @@
 #include <sstream>
 #include "../include/ArgumentParser.h"
+using namespace terminal::arguments;
 
 bool ArgumentParser::parseArguments(int argc, char **argv) {
     bool inQuote = false;

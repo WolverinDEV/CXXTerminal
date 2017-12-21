@@ -8,7 +8,7 @@
 #include <algorithm>
 
 using namespace std;
-namespace terminal {
+namespace terminal::tab {
     inline void split(const string &s, const string& delim, vector<string> &elems) {
         auto start = 0U;
         auto end = s.find(delim);
@@ -20,41 +20,38 @@ namespace terminal {
         elems.push_back(s.substr(start, end - start));
     }
 
-    AvTabCompleter::AvTabCompleter() : DependCompleter(nullptr, "", false) {
+    CompleterBase::CompleterBase() : completer(nullptr, "", false) {
         this->baseCompleter = [&](std::string line, std::string buffer, std::vector<std::string> &completions) {
             vector<string> args;
             split(line, " ", args);
 
-            vector<DependCompleter *> completer = getAvaribilities(args/*, spaces*/);
-
-            for (auto& it : completer) {
+            vector<completer *> completer = availabilities(args);
+            for (auto& it : completer)
                 completions.push_back(it->expected);
-            }
         };
     }
 
-    DependCompleter::DependCompleter(std::string parm, bool ignoreCase) : DependCompleter(nullptr, parm,
-                                                                                          ignoreCase) {}
+    completer::completer(std::string parm, bool ignoreCase) : completer(nullptr, parm, ignoreCase) {}
 
-    DependCompleter::DependCompleter(DependCompleter *parent, std::string parm, bool ignoreCase) {
+    completer::completer(completer *parent, std::string parm, bool ignoreCase) {
         this->root = parent;
         this->expected = parm;
         this->ignoreCase = ignoreCase;
     }
 
-    DependCompleter::~DependCompleter() {
-        while (!this->next.empty()) {
-            delete next[0];
+    completer::~completer() {
+        while (!this->_next.empty()) {
+            delete _next.front();
         }
         if (root)
-            root->next.erase(std::find(root->next.begin(), root->next.end(), this)/*, root->next.end()*/);
+            root->_next.erase(std::find(root->_next.begin(), root->_next.end(), this));
     }
 
-    std::vector<DependCompleter *> DependCompleter::getNext() {
-        return this->next;
+    std::vector<completer *> completer::next() {
+        return this->_next;
     }
 
-    bool DependCompleter::accept(std::string in) {
+    bool completer::accept(std::string in) {
         if (in.size() > this->expected.size())
             return false;
 
@@ -67,7 +64,7 @@ namespace terminal {
         return cin.compare(check) == 0;
     }
 
-    bool DependCompleter::acceptExact(std::string in) {
+    bool completer::acceptExact(std::string in) {
         if (in.size() != this->expected.size())
             return false;
         string cin(in);
@@ -79,21 +76,20 @@ namespace terminal {
         return cin.compare(check) == 0;
     }
 
-    DependCompleter *DependCompleter::parameter(std::string parameter) {
-        //TODO Better implementation of if item alredy registered..
-        for (auto it = this->next.begin(); it != this->next.end(); it++)
+    completer *completer::parameter(std::string parameter) {
+        //TODO Better implementation of if item already registered..
+        for (auto it = this->_next.begin(); it != this->_next.end(); it++)
             if ((*it)->expected == parameter)
                 return *it;
-        DependCompleter *next = new DependCompleter(this, parameter, true);
-        this->next.push_back(next);
+        completer *next = new completer(this, parameter, true);
+        this->_next.push_back(next);
         return next;
     }
 
-    bool DependCompleter::unregister(std::string parameter) {
-        for (auto it = this->next.begin(); it != this->next.end(); it++)
+    bool completer::unregister(std::string parameter) {
+        for (auto it = this->_next.begin(); it != this->_next.end(); it++)
             if ((*it)->expected == parameter) {
-                DependCompleter *&completer = *it;
-                writeMessage("Y: " + to_string(this->next.size()));
+                completer* completer = *it;
                 //this->next.erase(it);
                 delete completer;
                 return true;
@@ -101,32 +97,32 @@ namespace terminal {
         return false;
     }
 
-    bool DependCompleter::registerTabCompleter(DependCompleter *completer) {
-        for (auto it = this->next.begin(); it != this->next.end(); it++)
+    bool completer::registerTabCompleter(completer *completer) {
+        for (auto it = this->_next.begin(); it != this->_next.end(); it++)
             if ((*it)->expected == completer->expected)
                 return false;
-        this->next.push_back(completer);
+        this->_next.push_back(completer);
         return true;
     }
 
-    bool DependCompleter::unregisterTabCompleter(DependCompleter *completer) {
-        this->next.erase(std::find(this->next.begin(), this->next.end(), completer));
+    bool completer::unregisterTabCompleter(tab::completer *completer) {
+        this->_next.erase(std::find(this->_next.begin(), this->_next.end(), completer));
         return true;
     }
 
-    DependCompleter *DependCompleter::wildcard() {
-        for (auto it = this->next.begin(); it != this->next.end(); it++)
-            if (dynamic_cast<WildcardCompleter *>(*it) != nullptr)
+    completer *completer::wildcard() {
+        for (auto it = this->_next.begin(); it != this->_next.end(); it++)
+            if (dynamic_cast<tab::wildcard *>(*it) != nullptr)
                 return *it;
-        DependCompleter *next = new WildcardCompleter(this);
-        this->next.push_back(next);
+        completer *next = new tab::wildcard(this);
+        this->_next.push_back(next);
         return next;
     }
 
-    bool DependCompleter::unregisterWildcard() {
-        for (auto it = this->next.begin(); it != this->next.end(); it++)
-            if (dynamic_cast<WildcardCompleter *>(*it) != nullptr) {
-                this->next.erase(std::find(this->next.begin(), this->next.end(), *it));
+    bool completer::unregisterWildcard() {
+        for (auto it = this->_next.begin(); it != this->_next.end(); it++)
+            if (dynamic_cast<tab::wildcard *>(*it) != nullptr) {
+                this->_next.erase(std::find(this->_next.begin(), this->_next.end(), *it));
                 (*it)->root = nullptr;
                 delete *it; //Automaticly get removed
                 return true;
@@ -134,23 +130,22 @@ namespace terminal {
         return false;
     }
 
-    std::vector<DependCompleter *> AvTabCompleter::getAvaribilities(std::vector<std::string> &args/*, int index*/) {
-        vector<DependCompleter *> current(this->next);
+    std::vector<completer *> CompleterBase::availabilities(std::vector<std::string> &args/*, int index*/) {
+        vector<completer *> current(this->_next);
 
         for (int i = 0; i < args.size() - 1; i++) {
-            vector<DependCompleter *> out;
+            vector<completer *> out;
             string str = args.size() > i ? args[i] : "";
-            for (auto it = current.begin(); it != current.end(); it++) {
-                if ((*it)->acceptExact(str)) {
-                    vector<DependCompleter *> c = (*it)->getNext();
-                    for (auto i2 = c.begin(); i2 != c.end(); i2++)
-                        out.push_back(*i2);
+            for (auto elm : current) {
+                if (elm->acceptExact(str)) {
+                    for (auto e2 : elm->next())
+                        out.push_back(e2);
                 }
             }
-            current = vector<DependCompleter *>(out);
+            current = out;
         }
 
-        vector<DependCompleter *> out;
+        vector<completer *> out;
         for (auto it = current.begin(); it != current.end(); it++) {
             if ((*it)->accept(args[args.size() - 1]) && (*it)->expected != "") {
                 out.push_back(*it);
@@ -160,13 +155,13 @@ namespace terminal {
         return out;
     }
 
-    WildcardCompleter::WildcardCompleter(DependCompleter *parent) : DependCompleter(parent, "", true) {}
+    wildcard::wildcard(completer *parent) : completer(parent, "", true) {}
 
-    bool WildcardCompleter::accept(std::string in) {
+    bool wildcard::accept(std::string in) {
         return true;
     }
 
-    bool WildcardCompleter::acceptExact(std::string in) {
+    bool wildcard::acceptExact(std::string in) {
         return true;
     }
 }

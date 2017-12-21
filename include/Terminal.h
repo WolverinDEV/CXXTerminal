@@ -46,28 +46,21 @@ namespace terminal {
             std::string readLine(const std::string& promt = "", std::chrono::time_point<std::chrono::system_clock> timeout = std::chrono::time_point<std::chrono::system_clock>());
 
             std::string getCursorBuffer();
-
             void setCursorBuffer(std::string);
 
             size_t getCursorPosition();
-
             void setCursorPosition(size_t index);
 
             void setPromt(std::string promt);
-
-            std::string getPromt() {
-                return this->promt;
-            }
+            std::string getPromt() { return this->promt; }
 
             void addTabCompleter(TabCompleter *tabCompleter);
-
             void removeTabCompleter(TabCompleter *tabCompleter);
 
             int startReader();
-
             int stopReader();
         private:
-            void printCommand(std::string command);
+            void printAnsiCommand(std::string command);
 
 #ifndef USE_LIBEVENT
             int readNextByte();

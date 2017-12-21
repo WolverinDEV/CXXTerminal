@@ -113,7 +113,6 @@ inline string leftPad(string in, int size){
 
 inline string toString(double num, int digsits){
     char buffer[100];
-    writeMessage("To string: "+to_string(num));
     sprintf(buffer, ("%."+to_string(digsits)+"f").c_str(), num);
     return string(buffer);
 }

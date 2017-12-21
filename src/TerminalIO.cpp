@@ -189,12 +189,12 @@ bool impl::handleRead() {
             newInputTyped = true;
             if(type == 68){
                 if(cursorPosition > 0){
-                    this->printCommand("1D");
+                    this->printAnsiCommand("1D");
                     this->cursorPosition--;
                 } else return true;
             } else if(type == 67){
                 if(cursorPosition < this->cursorBuffer.size()) {
-                    this->printCommand("1C");
+                    this->printAnsiCommand("1C");
                     this->cursorPosition++;
                 } else return true;
             } else if(type == 65){ //Arow up

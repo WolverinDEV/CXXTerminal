@@ -38,11 +38,9 @@ using namespace std::chrono;
 int main(int argsSize, char** args){
     terminal::install();
 
-    terminal::instance()->writeMessage(terminal::stripCharacterCodes("Hello &bWorld", "&"));
-    terminal::instance()->writeMessage(terminal::stripCharacterCodes("Hello §bWorld", "§"));
+    writeMessage(ANSI_RED + terminal::parseCharacterCodes("Hello §§aWorld", "§"));
 
     terminal::uninstall();
-
     return 0;
     /*
     ArgumentParser parser;
@@ -54,13 +52,11 @@ int main(int argsSize, char** args){
     if(true) return 0;
      */
 
-    AvTabCompleter cmp;
+    tab::CompleterBase cmp;
     cmp.parameter("hello")->parameter("hell!");
     cmp.parameter("hello")->parameter("World");
     cmp.parameter("world")->parameter("World");
     cmp.wildcard()->parameter("xxxx");
-    cmp.unregisterWildcard();
-    cmp.unregister("hello");
     terminal::instance()->addTabCompleter(cmp.getBasedCompleter());
 
     terminal::instance()->writeMessage("§aHello §bworld § X §a");
