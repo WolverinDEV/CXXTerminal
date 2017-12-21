@@ -1,6 +1,3 @@
-//
-// Created by wolverindev on 20.12.17.
-//
 #include "../include/Terminal.h"
 #include <sstream>
 #include <iostream>
@@ -14,8 +11,13 @@ string terminal::parseCharacterCodes(string in, std::string characterCode) {
     stringstream out;
     size_t index = 0;
     size_t oldIndex = 0;
-    while((index = in.find(characterCode, oldIndex)) > 0 && index < in.size()){
+
+    do {
+        index = in.find(characterCode, oldIndex);
         out << in.substr(oldIndex, index - oldIndex);
+        if(index == string::npos) break;
+        if(index + characterCode.length() + 1 > in.length()) break;
+
         switch (tolower(in[index + characterCode.length()])){
             case '0':
                 out << ANSI_BLACK; break;
@@ -60,24 +62,27 @@ string terminal::parseCharacterCodes(string in, std::string characterCode) {
             case 'r':
                 out << ANSI_RESET; break;
             default:
-                out << "§";
+                out << characterCode;
                 index -= 1;
         }
-        index += characterCode.length() + 1;
-        oldIndex = index;
-    }
-    out << in.substr(oldIndex);
+        oldIndex = (index + characterCode.length() + 1);
+    } while(true);
     return out.str();
 }
 
 std::string terminal::stripCharacterCodes(std::string in, std::string characterCode) {
-    if(characterCode.empty()) characterCode = "§";
+    if(characterCode.empty()) characterCode += "§";
 
     stringstream out;
     size_t index = 0;
     size_t oldIndex = 0;
-    while((index = in.find(characterCode, oldIndex)) > 0 && index < in.size()){
+
+    do {
+        index = in.find(characterCode, oldIndex);
         out << in.substr(oldIndex, index - oldIndex);
+        if(index == string::npos) break;
+        if(index + characterCode.length() + 1 > in.length()) break;
+
         switch (tolower(in[index + characterCode.length()])){
             case '0':
             case '1':
@@ -106,9 +111,7 @@ std::string terminal::stripCharacterCodes(std::string in, std::string characterC
                 out << characterCode;
                 index -= 1;
         }
-        index += characterCode.length() + 1;
-        oldIndex = index;
-    }
-    out << in.substr(oldIndex);
+        oldIndex = (index + characterCode.length() + 1);
+    } while(true);
     return out.str();
 }

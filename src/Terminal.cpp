@@ -77,7 +77,7 @@ void terminal::uninstall() {
     assert(terminalInstance);
 
     terminalInstance->stopReader();
-    if(!terminalInstance->getPromt().empty()) cout << "\r" << flush;
+    if(!terminalInstance->getPrompt().empty()) cout << "\r" << flush;
     delete terminalInstance;
     terminalInstance = nullptr;
     removeNonblock();
@@ -88,14 +88,14 @@ bool terminal::active() {
 }
 
 void impl::printAnsiCommand(std::string command) {
-    std::cout << "\x1B[" << command;
+    std::cout << ANSI_ESC"[" << command;
     std::cout.flush();
 }
 
-void impl::setPromt(std::string promt) {
-    auto str = parseCharacterCodes(std::move(promt));
-    if(this->promt == str) return;
-    this->promt = str;
+void impl::setPrompt(std::string prompt) {
+    auto str = parseCharacterCodes(std::move(prompt));
+    if(this->prompt == str) return;
+    this->prompt = str;
     this->redrawLine();
 }
 
@@ -107,13 +107,13 @@ void impl::redrawLine(bool lockMutex) {
     }
 
     std::stringstream ss;
-    ss << "\r" << promt << std::string(&(cursorBuffer[0]), cursorBuffer.size());
+    ss << "\r" << prompt << std::string(&(cursorBuffer[0]), cursorBuffer.size());
     ssize_t size = ss.str().length() - 1;
-    ssize_t moveBack = size - this->cursorPosition - this->promt.size();
+    ssize_t moveBack = size - this->_cursorPosition - this->prompt.size();
 
-    ss << "\x1B[K";
+    ss << ANSI_ESC"[K";
     if(moveBack > 0){
-        ss << "\x1B[" + std::to_string(moveBack)+"D";
+        ss << ANSI_ESC"[" + std::to_string(moveBack)+"D";
     }
 
     std::cout << ANSI_RESET << ss.str() << flush;
@@ -123,9 +123,9 @@ void impl::writeMessage(std::string message, bool noCharacterCodes) {
     lock_guard<std::mutex> lock(this->mutex);
 
     if(!noCharacterCodes)
-        std::cout << ANSI_RESET"\r" << parseCharacterCodes(message) << "\x1B[K" << std::endl;
+        std::cout << ANSI_RESET"\r" << parseCharacterCodes(message) << ANSI_ESC"[K" << std::endl;
     else
-        std::cout << ANSI_RESET"\r" << message << "\x1B[K" << std::endl;
+        std::cout << ANSI_RESET"\r" << message << ANSI_ESC"[K" << std::endl;
     redrawLine(false);
 }
 
@@ -162,7 +162,7 @@ std::string impl::getCursorBuffer() {
     return std::string(&(this->cursorBuffer[0]), cursorBuffer.size());
 }
 
-void impl::setCursorBuffer(std::string buffer) {
+void impl::cursorPosition(std::string buffer) {
     lock_guard<std::mutex> lock(this->bufferMutex);
 
     int64_t oldSize = this->cursorBuffer.size();
@@ -179,24 +179,24 @@ void impl::setCursorBuffer(std::string buffer) {
         std::cout.flush();
     }
     */
-    this->cursorPosition += moveOffset;
+    this->_cursorPosition += moveOffset;
     this->redrawLine(false);
 }
 
-size_t impl::getCursorPosition() {
-    return this->cursorPosition;
+size_t impl::cursorPosition() {
+    return this->_cursorPosition;
 }
 
 void impl::setCursorPosition(size_t index) { //TODO bounds check!
-    ssize_t move = index - this->cursorPosition ;
+    ssize_t move = index - this->_cursorPosition ;
     if(move < 0){
-        std::cout << "\x1B[" + std::to_string(-move)+"D";
+        std::cout << ANSI_ESC"[" + std::to_string(-move)+"D";
         std::cout.flush();
     } else {
-        std::cout << "\x1B[" + std::to_string(move)+"C";
+        std::cout << ANSI_ESC"[" + std::to_string(move)+"C";
         std::cout.flush();
     }
-    this->cursorPosition = index;
+    this->_cursorPosition = index;
 }
 
 void impl::addTabCompleter(TabCompleter* tabCompleter) {

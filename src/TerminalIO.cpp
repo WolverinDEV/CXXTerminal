@@ -1,6 +1,3 @@
-//
-// Created by wolverindev on 20.12.17.
-//
 #include <algorithm>
 #include <sstream>
 #include <zconf.h>
@@ -127,13 +124,13 @@ bool impl::handleRead() {
         this->historyIndex = 0;
 
         cursorBuffer.clear();
-        cursorPosition = 0;
+        _cursorPosition = 0;
         redrawLine();
     } else if(character == 9){
         this->rdbuf = this->rdbuf.substr(1);
         if(newInputTyped){
             int inc = 0;
-            if(this->cursorPosition == this->cursorBuffer.size()){
+            if(this->_cursorPosition == this->cursorBuffer.size()){
                 this->currentTabComplete.clear();
                 string buffer = getCursorBuffer();
                 size_t lastIndex = buffer.find_last_of(' ');
@@ -152,7 +149,8 @@ bool impl::handleRead() {
                     inc++;
 
                 if(!this->currentTabComplete.empty()){
-                    setCursorBuffer(buffer.substr(0, lastIndex == -1 ? 0 : lastIndex)  + (lastIndex == -1 ? "" : " ") + this->currentTabComplete[0]);
+                    cursorPosition(buffer.substr(0, lastIndex == -1 ? 0 : lastIndex) + (lastIndex == -1 ? "" : " ") +
+                                   this->currentTabComplete[0]);
                     this->tabCompleteIndex = 0;
                 } else
                     this->tabCompleteIndex = -1;
@@ -160,8 +158,8 @@ bool impl::handleRead() {
             }
             else {
                 size_t next;
-                if(this->cursorBuffer.size() > this->cursorPosition + 1)
-                    next = getCursorBuffer().find_first_of(' ', this->cursorPosition + 1);
+                if(this->cursorBuffer.size() > this->_cursorPosition + 1)
+                    next = getCursorBuffer().find_first_of(' ', this->_cursorPosition + 1);
                 else
                     next = string::npos;
                 setCursorPosition(next == string::npos ? this->cursorBuffer.size() : next);
@@ -175,7 +173,8 @@ bool impl::handleRead() {
                 this->tabCompleteIndex = 0;
             std::string fullBuffer = this->getCursorBuffer();
             size_t lastIndex = fullBuffer.find_last_of(' ');
-            setCursorBuffer(fullBuffer.substr(0, lastIndex == string::npos ? 0 : lastIndex) + (lastIndex == string::npos ? "" : " ") + this->currentTabComplete[this->tabCompleteIndex]);
+            cursorPosition(fullBuffer.substr(0, lastIndex == string::npos ? 0 : lastIndex) +
+                           (lastIndex == string::npos ? "" : " ") + this->currentTabComplete[this->tabCompleteIndex]);
         }
         return true;
     } else if(character == 27){
@@ -188,27 +187,27 @@ bool impl::handleRead() {
         if(category == 91){ //Arrow keys
             newInputTyped = true;
             if(type == 68){
-                if(cursorPosition > 0){
+                if(_cursorPosition > 0){
                     this->printAnsiCommand("1D");
-                    this->cursorPosition--;
+                    this->_cursorPosition--;
                 } else return true;
             } else if(type == 67){
-                if(cursorPosition < this->cursorBuffer.size()) {
+                if(_cursorPosition < this->cursorBuffer.size()) {
                     this->printAnsiCommand("1C");
-                    this->cursorPosition++;
+                    this->_cursorPosition++;
                 } else return true;
             } else if(type == 65){ //Arow up
                 if(this->historyIndex < this->commandHistory.size()){
                     this->historyIndex++;
-                    this->setCursorBuffer(this->commandHistory[this->commandHistory.size()-historyIndex]); //Invert
+                    this->cursorPosition(this->commandHistory[this->commandHistory.size() - historyIndex]); //Invert
                 }
             } else if(type == 66){ //Arow down
                 if(this->historyIndex > 0){
                     this->historyIndex--;
                     if(this->historyIndex == 0)
-                        this->setCursorBuffer("");
+                        this->cursorPosition("");
                     else
-                        this->setCursorBuffer(this->commandHistory[this->commandHistory.size()-historyIndex]); //Invert
+                        this->cursorPosition(this->commandHistory[this->commandHistory.size() - historyIndex]); //Invert
                 }
             }
             //printMessage("New cursor position: "+to_string(cursorPosition));
@@ -216,9 +215,9 @@ bool impl::handleRead() {
     } else if(character == 127){
         this->rdbuf = this->rdbuf.substr(1);
 
-        if(cursorPosition > 0) {
-            cursorPosition--;
-            cursorBuffer.erase(cursorBuffer.begin() + cursorPosition);
+        if(_cursorPosition > 0) {
+            _cursorPosition--;
+            cursorBuffer.erase(cursorBuffer.begin() + _cursorPosition);
             this->newInputTyped = true;
             redrawLine();
         }
@@ -228,11 +227,11 @@ bool impl::handleRead() {
         //printMessage("having character: "+to_string(character)+" curso position: "+to_string(cursorPosition)+" buffersize: "+to_string(cursorBuffer.size()));
         if(isprint(character)){
             newInputTyped = true;
-            if(cursorPosition < cursorBuffer.size()){
-                cursorBuffer.insert(cursorBuffer.begin()+cursorPosition, (char) character);
+            if(_cursorPosition < cursorBuffer.size()){
+                cursorBuffer.insert(cursorBuffer.begin() + _cursorPosition, (char) character);
             } else
                 cursorBuffer.push_back((char) character);
-            cursorPosition++;
+            _cursorPosition++;
             redrawLine();
         }
     }

@@ -1,12 +1,9 @@
 #pragma once
 
-#define USE_LIBEVENT
-
 #include "AnsiCodes.h"
-
+#include <functional>
 #include <string>
 #include <vector>
-#include <functional>
 #include <thread>
 #include <mutex>
 #include <deque>
@@ -32,8 +29,8 @@ namespace terminal {
     class impl;
     extern impl* instance();
 
-    extern std::string parseCharacterCodes(std::string in, std::string characterCode = "");
-    extern std::string stripCharacterCodes(std::string in, std::string characterCode = "");
+    extern std::string parseCharacterCodes(std::string in, std::string characterCode = "§");
+    extern std::string stripCharacterCodes(std::string in, std::string characterCode = "§");
 
     class impl {
         public:
@@ -43,16 +40,16 @@ namespace terminal {
 
             size_t linesAvailable();
 
-            std::string readLine(const std::string& promt = "", std::chrono::time_point<std::chrono::system_clock> timeout = std::chrono::time_point<std::chrono::system_clock>());
+            std::string readLine(const std::string& prompt = "", std::chrono::time_point<std::chrono::system_clock> timeout = std::chrono::time_point<std::chrono::system_clock>());
 
             std::string getCursorBuffer();
-            void setCursorBuffer(std::string);
+            void cursorPosition(std::string);
 
-            size_t getCursorPosition();
+            size_t cursorPosition();
             void setCursorPosition(size_t index);
 
-            void setPromt(std::string promt);
-            std::string getPromt() { return this->promt; }
+            void setPrompt(std::string prompt);
+            std::string getPrompt() { return this->prompt; }
 
             void addTabCompleter(TabCompleter *tabCompleter);
             void removeTabCompleter(TabCompleter *tabCompleter);
@@ -85,8 +82,8 @@ namespace terminal {
 
             std::deque<std::string> lineBuffer;
 
-            std::string promt = "";
-            size_t cursorPosition = 0;
+            std::string prompt = "";
+            size_t _cursorPosition = 0;
             std::vector<char> cursorBuffer;
 
             bool newInputTyped = true;

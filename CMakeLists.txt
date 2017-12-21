@@ -4,6 +4,7 @@ project(CXXTerminal)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 #add_definitions(-DTERMINAL_NON_BLOCK)
 add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+add_definitions(-DUSE_LIBEVENT)
 
 #link pthread
 link_libraries(pthread)
@@ -23,10 +24,10 @@ file(GLOB HEADERS include/*.h)
 # Find source files
 file(GLOB TEST test/*)
 
-message("Src: ${HEADERS} - ${SOURCES} - ${TEST}")
-
 # Create shared library
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES} ${HEADERS})
+target_link_libraries(${PROJECT_NAME} event)
+
 add_library(${PROJECT_NAME}Static STATIC ${SRC_FILES} ${HEADERS})
 
 # Install library

@@ -37,9 +37,7 @@ using namespace std::chrono;
 
 int main(int argsSize, char** args){
     terminal::install();
-
-    writeMessage(ANSI_RED + terminal::parseCharacterCodes("Hello §§aWorld", "§"));
-
+    writeMessage("§bHello §aWorld");
     terminal::uninstall();
     return 0;
     /*
@@ -101,7 +99,9 @@ int main(int argsSize, char** args){
 
         std::string stime = to_string(time / 1000);
 
-        terminal::instance()->setPromt("["+string(time > 10*1000 ? time > 30*1000 ? ANSI_RED : ANSI_BROWN : ANSI_GREEN)+stime+ANSI_RESET"] > ");
+        terminal::instance()->setPrompt(
+                "[" + string(time > 10 * 1000 ? time > 30 * 1000 ? ANSI_RED : ANSI_BROWN : ANSI_GREEN) + stime +
+                ANSI_RESET"] > ");
         //terminal::instance()->setPromt("["+getDate()+"] > ");
         std::this_thread::sleep_for(std::chrono::microseconds(123));
         time++;
