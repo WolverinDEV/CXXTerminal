@@ -8,7 +8,8 @@
 #include <algorithm>
 
 using namespace std;
-namespace terminal::tab {
+namespace terminal {
+namespace tab {
     inline void split(const string &s, const string& delim, vector<string> &elems) {
         auto start = 0U;
         auto end = s.find(delim);
@@ -164,4 +165,5 @@ namespace terminal::tab {
     bool wildcard::acceptExact(std::string in) {
         return true;
     }
+}
 }
