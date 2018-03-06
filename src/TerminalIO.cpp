@@ -4,6 +4,7 @@
 #include <cassert>
 #include <iostream>
 #include <cstring>
+#include <csignal>
 #include "../include/Terminal.h"
 
 using namespace std;
@@ -40,8 +41,10 @@ int impl::startReader() {
     this->readEvent = event_new(this->eventLoop, STDIN_FILENO, EV_READ | EV_PERSIST, [](int a, short b, void* c){ ((impl*) c)->handleInput(a, b, c); }, this);
     event_add(readEvent, nullptr);
 
-    this->readerThread = new std::thread([&](){
-         event_base_loop(this->eventLoop, 0);
+    this->readerThread = new std::thread(
+            [&](){
+        signal(SIGABRT, SIG_IGN);
+        event_base_dispatch(this->eventLoop);
     });
     return 0;
 #endif
@@ -59,23 +62,24 @@ int impl::stopReader() {
     this->readerThread = nullptr;
     return 0;
 #else
-    event_del(this->readEvent);
-    event_base_loopbreak(this->eventLoop);
-
-    if(this->readerThread->joinable()) {
-        auto handle = this->readerThread->native_handle();
-        pthread_cancel(handle);
-        if(this->readerThread->joinable()) this->readerThread->join();
+    if(this->readEvent) {
+        event_del(this->readEvent);
+        event_free(this->readEvent);
+        this->readEvent = nullptr;
     }
+
+    if(this->eventLoop) {
+        event_base_loopexit(this->eventLoop, nullptr);
+        event_base_free(this->eventLoop);
+        this->eventLoop = nullptr;
+    }
+
+    if(this->readerThread && this->readerThread->joinable())
+        this->readerThread->join();
 
     delete this->readerThread;
     this->readerThread = nullptr;
 
-    event_free(this->readEvent);
-    this->readEvent = nullptr;
-
-    event_base_free(this->eventLoop);
-    this->eventLoop = nullptr;
 #endif
     return -1;
 }
