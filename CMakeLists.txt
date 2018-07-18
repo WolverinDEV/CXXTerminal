@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.6.0)
 project(CXXTerminal)
 
+set(CMAKE_CXX_COMPILER "arm-linux-gnueabi-g++")
+set(CMAKE_CXX_COMPILER_AR "arm-linux-gnueabi-g++")
+#set(CMAKE_CXX_FLAGS "--specs=nosys.specs")
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 #add_definitions(-DTERMINAL_NON_BLOCK)
 add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
-add_definitions(-DUSE_LIBEVENT)
 
 #link pthread
 link_libraries(pthread)
@@ -24,10 +27,16 @@ file(GLOB HEADERS include/*.h)
 # Find source files
 file(GLOB TEST test/*)
 
+option(ENABLE_LIBEVENT "Enable/disable libevent" ON)
+if(ENABLE_LIBEVENT)
+    add_definitions(-DUSE_LIBEVENT)
+endif()
+
 # Create shared library
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES} ${HEADERS})
-target_link_libraries(${PROJECT_NAME} event)
-
+if(ENABLE_LIBEVENT)
+    target_link_libraries(${PROJECT_NAME} event)
+endif()
 add_library(${PROJECT_NAME}Static STATIC ${SRC_FILES} ${HEADERS})
 
 # Install library
@@ -37,4 +46,6 @@ install(FILES ${HEADERS} DESTINATION include/${PROJECT_NAME})
 
 #Create test
 add_executable(${PROJECT_NAME}Test ${TEST} ${HEADERS} ${SRC_FILES})
-target_link_libraries(${PROJECT_NAME}Test event)
+if(ENABLE_LIBEVENT)
+    target_link_libraries(${PROJECT_NAME}Test event)
+endif()

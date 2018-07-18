@@ -41,8 +41,7 @@ int impl::startReader() {
     this->readEvent = event_new(this->eventLoop, STDIN_FILENO, EV_READ | EV_PERSIST, [](int a, short b, void* c){ ((impl*) c)->handleInput(a, b, c); }, this);
     event_add(readEvent, nullptr);
 
-    this->readerThread = new std::thread(
-            [&](){
+    this->readerThread = new std::thread([&](){
         signal(SIGABRT, SIG_IGN);
         event_base_dispatch(this->eventLoop);
     });
@@ -53,6 +52,8 @@ int impl::startReader() {
 
 int impl::stopReader() {
     assert(this->readerThread);
+    assert(this->readerThread->get_id() != this_thread::get_id());
+
     this->running = false;
 
 #ifndef USE_LIBEVENT
@@ -63,7 +64,7 @@ int impl::stopReader() {
     return 0;
 #else
     if(this->readEvent) {
-        event_del(this->readEvent);
+        event_del_block(this->readEvent);
         event_free(this->readEvent);
         this->readEvent = nullptr;
     }
@@ -85,7 +86,7 @@ int impl::stopReader() {
 }
 
 #ifndef USE_LIBEVENT
-int Impl::readNextByte() {
+int impl::readNextByte() {
     int read;
     while(this->running){
         read = getchar();
