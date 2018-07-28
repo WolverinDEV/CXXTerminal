@@ -1,0 +1,3 @@
+[submodule "libraries/event"]
+	path = libraries/event
+	url = https://github.com/libevent/libevent.git
