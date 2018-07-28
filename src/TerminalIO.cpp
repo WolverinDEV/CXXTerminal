@@ -6,6 +6,9 @@
 #include <cstring>
 #include <csignal>
 #include "../include/Terminal.h"
+#ifdef USE_LIBEVENT
+    #include <event2/thread.h>
+#endif
 
 using namespace std;
 using namespace terminal;
@@ -23,6 +26,11 @@ std::string join(std::vector<T> elm,const JoinFunction<T>& toStringFunc){
 
 
 int impl::startReader() {
+#ifdef EVTHREAD_USE_PTHREADS_IMPLEMENTED
+    if(evthread_use_pthreads() != 0)
+        cerr << "failed to execute evthread_use_pthreads()" << endl;
+#endif
+
     assert(!this->readerThread);
     this->running = true;
 
@@ -42,8 +50,8 @@ int impl::startReader() {
     event_add(readEvent, nullptr);
 
     this->readerThread = new std::thread([&](){
-        signal(SIGABRT, SIG_IGN);
-        event_base_dispatch(this->eventLoop);
+        while(this->running)
+            event_base_loop(this->eventLoop, 0);
     });
     return 0;
 #endif
@@ -70,13 +78,17 @@ int impl::stopReader() {
     }
 
     if(this->eventLoop) {
-        event_base_loopexit(this->eventLoop, nullptr);
-        event_base_free(this->eventLoop);
-        this->eventLoop = nullptr;
+        auto result = event_base_loopexit(this->eventLoop, nullptr);
+        if(result != 0) cerr << "Failed to break event loop!" << endl;
     }
 
     if(this->readerThread && this->readerThread->joinable())
         this->readerThread->join();
+
+    if(this->eventLoop) {
+        event_base_free(this->eventLoop);
+        this->eventLoop = nullptr;
+    }
 
     delete this->readerThread;
     this->readerThread = nullptr;
@@ -230,7 +242,7 @@ bool impl::handleRead() {
         this->rdbuf = this->rdbuf.substr(1);
 
         //printMessage("having character: "+to_string(character)+" curso position: "+to_string(cursorPosition)+" buffersize: "+to_string(cursorBuffer.size()));
-        if(isprint(character)){
+        if(isprint(character)) {
             newInputTyped = true;
             if(_cursorPosition < cursorBuffer.size()){
                 cursorBuffer.insert(cursorBuffer.begin() + _cursorPosition, (char) character);

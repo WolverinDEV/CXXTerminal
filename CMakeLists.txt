@@ -1,14 +1,12 @@
 cmake_minimum_required(VERSION 3.6.0)
 project(CXXTerminal)
 
-set(CMAKE_CXX_COMPILER "arm-linux-gnueabi-g++")
-set(CMAKE_CXX_COMPILER_AR "arm-linux-gnueabi-g++")
+#set(CMAKE_CXX_COMPILER "arm-linux-gnueabi-g++")
+#set(CMAKE_CXX_COMPILER_AR "arm-linux-gnueabi-g++")
 #set(CMAKE_CXX_FLAGS "--specs=nosys.specs")
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 #add_definitions(-DTERMINAL_NON_BLOCK)
 add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
-
 #link pthread
 link_libraries(pthread)
 
@@ -29,6 +27,14 @@ file(GLOB TEST test/*)
 
 option(ENABLE_LIBEVENT "Enable/disable libevent" ON)
 if(ENABLE_LIBEVENT)
+    if(NOT EVENT_PROJECT_PATH)
+
+    endif()
+    include_directories(libraries/event/include)
+    if(NOT EXISTS "${CMAKE_SOURCE_DIR}/libraries/event/build/lib/libevent.a")
+        message(FATAL_ERROR "If you want to use libevent than please build libevent first! (libraries/event)")
+    endif()
+    set(EVENT_LIBRARIES "${CMAKE_SOURCE_DIR}/libraries/event/build/lib/libevent.a" "${CMAKE_SOURCE_DIR}/libraries/event/build/lib/libevent_pthreads.a")
     add_definitions(-DUSE_LIBEVENT)
 endif()
 
@@ -47,5 +53,5 @@ install(FILES ${HEADERS} DESTINATION include/${PROJECT_NAME})
 #Create test
 add_executable(${PROJECT_NAME}Test ${TEST} ${HEADERS} ${SRC_FILES})
 if(ENABLE_LIBEVENT)
-    target_link_libraries(${PROJECT_NAME}Test event)
+    target_link_libraries(${PROJECT_NAME}Test ${EVENT_LIBRARIES})
 endif()
