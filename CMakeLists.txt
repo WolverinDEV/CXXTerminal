@@ -30,6 +30,7 @@ if(ENABLE_LIBEVENT)
 
     endif()
     include_directories(libraries/event/include)
+    include_directories(libraries/event/build/include)
     if(NOT EXISTS "${CMAKE_SOURCE_DIR}/libraries/event/build/lib/libevent.a")
         message(FATAL_ERROR "If you want to use libevent than please build libevent first! (libraries/event)")
     endif()
@@ -40,7 +41,7 @@ endif()
 # Create shared library
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES} ${HEADERS})
 if(ENABLE_LIBEVENT)
-    target_link_libraries(${PROJECT_NAME} event)
+    target_link_libraries(${PROJECT_NAME} ${EVENT_LIBRARIES})
 endif()
 add_library(${PROJECT_NAME}Static STATIC ${SRC_FILES} ${HEADERS})
 
