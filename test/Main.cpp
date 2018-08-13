@@ -38,8 +38,6 @@ using namespace std::chrono;
 int main(int argsSize, char** args){
     terminal::install();
     terminal::instance()->writeMessage("Hello §4World");
-    terminal::uninstall();
-    return 0;
     /*
     ArgumentParser parser;
     int number;
