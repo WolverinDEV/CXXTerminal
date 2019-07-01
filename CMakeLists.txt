@@ -10,14 +10,15 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 link_libraries(pthread)
 
 set(SRC_FILES
-		src/utils/CString.cpp
-		src/utils/Grapth.cpp
+	src/utils/CString.cpp
+	src/utils/Grapth.cpp
 
-		src/ArgumentParser.cpp
-		src/TabCompleter.cpp
-		src/Terminal.cpp
-		src/TerminalAnsi.cpp
-		src/TerminalIO.cpp)
+	src/ArgumentParser.cpp
+	src/TabCompleter.cpp
+	src/Terminal.cpp
+	src/TerminalAnsi.cpp
+	src/TerminalIO.cpp
+)
 
 # Find library headers
 file(GLOB HEADERS include/*.h)
@@ -25,16 +26,16 @@ file(GLOB HEADERS include/*.h)
 file(GLOB TEST test/*)
 
 option(ENABLE_LIBEVENT "Enable/disable libevent" ON)
+option(NO_EMBETTED_LIBEVENT "Enable/disable internal libevent library" OFF)
 if(ENABLE_LIBEVENT)
-    if(NOT EVENT_PROJECT_PATH)
-
-    endif()
-    include_directories(libraries/event/include)
-    include_directories(libraries/event/build/include)
-    if(NOT EXISTS "${CMAKE_SOURCE_DIR}/libraries/event/build/lib/libevent.a")
-        message(FATAL_ERROR "If you want to use libevent than please build libevent first! (libraries/event)")
-    endif()
-    set(EVENT_LIBRARIES "${CMAKE_SOURCE_DIR}/libraries/event/build/lib/libevent.a" "${CMAKE_SOURCE_DIR}/libraries/event/build/lib/libevent_pthreads.a")
+	if(NOT NO_EMBETTED_LIBEVENT)
+		include_directories(libraries/event/include)
+		include_directories(libraries/event/build/include)
+		if(NOT EXISTS "${CMAKE_SOURCE_DIR}/libraries/event/build/lib/libevent.a")
+			message(FATAL_ERROR "If you want to use libevent than please build libevent first! (libraries/event)")
+		endif()
+		set(EVENT_LIBRARIES "${CMAKE_SOURCE_DIR}/libraries/event/build/lib/libevent.a" "${CMAKE_SOURCE_DIR}/libraries/event/build/lib/libevent_pthreads.a")
+	endif()
     add_definitions(-DUSE_LIBEVENT)
 endif()
 
