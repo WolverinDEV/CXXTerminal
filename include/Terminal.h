@@ -12,6 +12,10 @@
     #include <event.h>
 #endif
 
+#ifdef WIN32
+#include <Windows.h>
+#endif
+
 
 namespace terminal {
     typedef std::function<void(std::string, std::string, std::vector<std::string> &)> TabCompleter;
@@ -34,6 +38,9 @@ namespace terminal {
 
     class impl {
         public:
+			impl();
+			virtual ~impl();
+
             void redrawLine(bool lockMutex = true);
 
             void writeMessage(std::string message, bool noCharacterCodes = false);
@@ -58,7 +65,6 @@ namespace terminal {
             int stopReader();
         private:
             void printAnsiCommand(std::string command);
-
 #ifndef USE_LIBEVENT
             int readNextByte();
 #else
@@ -96,6 +102,11 @@ namespace terminal {
             std::vector<std::string> commandHistory;
             size_t maxHistorySize = 100;
             int historyIndex = 0;
+
+#ifdef WIN32
+			HANDLE console_handle = nullptr;
+			bool console_own_handle = false;
+#endif
     };
 }
 

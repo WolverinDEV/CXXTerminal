@@ -4,10 +4,14 @@ project(CXXTerminal)
 #set(CMAKE_CXX_COMPILER "arm-linux-gnueabi-g++")
 #set(CMAKE_CXX_COMPILER_AR "arm-linux-gnueabi-g++")
 #set(CMAKE_CXX_FLAGS "--specs=nosys.specs")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+if(NOT WIN32)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	#link pthread
+	link_libraries(pthread)
+else()
+	link_libraries(Ws2_32)
+endif()
 #add_definitions(-DTERMINAL_NON_BLOCK)
-#link pthread
-link_libraries(pthread)
 
 set(SRC_FILES
 	src/utils/CString.cpp
@@ -36,11 +40,11 @@ if(ENABLE_LIBEVENT)
 		endif()
 		set(EVENT_LIBRARIES "${CMAKE_SOURCE_DIR}/libraries/event/build/lib/libevent.a" "${CMAKE_SOURCE_DIR}/libraries/event/build/lib/libevent_pthreads.a")
 	else()
-		find_package(Libevent REQUIRED NO_DEFAULT_PATH)
+		find_package(Libevent REQUIRED)
 		# include(${CMAKE_MODULE_PATH}/libraries_wolverin_lap.cmake)
 
 		include_directories(${LIBEVENT_INCLUDE_DIRS})
-		set(EVENT_LIBRARIES "${LIBEVENT_LIBRARIES}")
+		set(EVENT_LIBRARIES ${LIBEVENT_STATIC_LIBRARIES})
 	endif()
     add_definitions(-DUSE_LIBEVENT)
 endif()
@@ -60,5 +64,6 @@ install(FILES ${HEADERS} DESTINATION include/${PROJECT_NAME})
 #Create test
 add_executable(${PROJECT_NAME}Test ${TEST} ${HEADERS} ${SRC_FILES})
 if(ENABLE_LIBEVENT)
+	message("Linking libevent")
     target_link_libraries(${PROJECT_NAME}Test ${EVENT_LIBRARIES})
 endif()

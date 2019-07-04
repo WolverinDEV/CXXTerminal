@@ -3,115 +3,97 @@
 #include <iostream>
 
 using namespace std;
-
 using namespace terminal;
+
+const static size_t ansi_code_length = 22;
+const static char ansi_code_keys[]{"abcdefknmolr0123456789ABCDEFKNMOLR"};
+const static char* ansi_code_values[]{
+    /* A-F */
+    ANSI_LIGHT_GREEN,
+    ANSI_LIGHT_CYAN,
+    ANSI_LIGHT_RED,
+    ANSI_LIGHT_PURPLE,
+    ANSI_YELLOW,
+    ANSI_WHITE,
+    /* K N M O L R */
+    ANSI_UNDERLINE,
+    ANSI_UNDERLINE,
+    (ANSI_UNDERLINE ANSI_REVERSE),
+    ANSI_BOLD,
+    ANSI_BOLD,
+    ANSI_RESET,
+
+    /* 0-9 */
+    ANSI_BLACK,
+    ANSI_BLUE,
+    ANSI_GREEN,
+    ANSI_CYAN,
+    ANSI_RED,
+    ANSI_PURPLE,
+    ANSI_BROWN,
+    ANSI_GRAY,
+    ANSI_DARK_GREY,
+    ANSI_LIGHT_BLUE,
+};
 string terminal::parseCharacterCodes(string in, std::string characterCode) {
-    if(characterCode.empty()) characterCode += "§";
+    string response;
+    response.reserve(in.length() + 64);
 
-    stringstream out;
-    size_t index = 0;
-    size_t oldIndex = 0;
+    if(characterCode.empty())
+        characterCode = "§";
 
-    do {
-        index = in.find(characterCode, oldIndex);
-        out << in.substr(oldIndex, index - oldIndex);
-        if(index == string::npos) break;
-        if(index + characterCode.length() + 1 > in.length()) break;
+    int index = 0, found_index;
+    while((found_index = in.find(characterCode, index)) != -1) {
+        if(index != found_index)
+            response.append(in, index, found_index - index);
+        index = found_index;
+        if(found_index + characterCode.length() > in.length())
+            break;
+        auto key_ptr = memchr(ansi_code_keys, in[found_index + characterCode.length()], sizeof(ansi_code_keys));
+        if(!key_ptr)
+            continue;
+        size_t code_index = (uintptr_t) key_ptr - (uintptr_t) ansi_code_keys;
+        if(code_index > ansi_code_length)
+            code_index -= ansi_code_length;
+        if(code_index > ansi_code_length)
+            continue;
+        response.append(ansi_code_values[code_index]);
+        index += characterCode.length() + 1;
+    }
 
-        switch (tolower(in[index + characterCode.length()])){
-            case '0':
-                out << ANSI_BLACK; break;
-            case '1':
-                out << ANSI_BLUE; break;
-            case '2':
-                out << ANSI_GREEN; break;
-            case '3':
-                out << ANSI_CYAN; break;
-            case '4':
-                out << ANSI_RED; break;
-            case '5':
-                out << ANSI_PURPLE; break;
-            case '6':
-                out << ANSI_BROWN; break;
-            case '7':
-                out << ANSI_GRAY; break;
-            case '8':
-                out << ANSI_DARK_GREY; break;
-            case '9':
-                out << ANSI_LIGHT_BLUE; break;
-            case 'a':
-                out << ANSI_LIGHT_GREEN; break;
-            case 'b':
-                out << ANSI_LIGHT_CYAN; break;
-            case 'c':
-                out << ANSI_LIGHT_RED; break;
-            case 'd':
-                out << ANSI_LIGHT_PURPLE; break;
-            case 'e':
-                out << ANSI_YELLOW; break;
-            case 'f':
-                out << ANSI_WHITE; break;
-            case 'k': break;
-            case 'n':
-                out << ANSI_UNDERLINE; break;
-            case 'm':
-                out << ANSI_UNDERLINE << ANSI_REVERSE; break;
-            case 'o': break;
-            case 'l':
-                out << ANSI_BOLD; break;
-            case 'r':
-                out << ANSI_RESET; break;
-            default:
-                out << characterCode;
-                index -= 1;
-        }
-        oldIndex = (index + characterCode.length() + 1);
-    } while(true);
-    return out.str();
+    if(index != found_index)
+        response.append(in, index, found_index - index);
+    response.shrink_to_fit();
+    return response;
 }
 
 std::string terminal::stripCharacterCodes(std::string in, std::string characterCode) {
-    if(characterCode.empty()) characterCode += "§";
+    string response;
+    response.reserve(in.length());
 
-    stringstream out;
-    size_t index = 0;
-    size_t oldIndex = 0;
+    if(characterCode.empty())
+        characterCode += "§";
 
-    do {
-        index = in.find(characterCode, oldIndex);
-        out << in.substr(oldIndex, index - oldIndex);
-        if(index == string::npos) break;
-        if(index + characterCode.length() + 1 > in.length()) break;
+    int index = 0, found_index;
+    while((found_index = in.find(characterCode, index)) != -1) {
+        if(index != found_index)
+            response.append(in, index, found_index - index);
+        index = found_index;
+        if(found_index + characterCode.length() > in.length())
+            break;
+        auto key_ptr = memchr(ansi_code_keys, in[found_index + characterCode.length()], sizeof(ansi_code_keys));
+        if(!key_ptr)
+            continue;
+        size_t code_index = (uintptr_t) key_ptr - (uintptr_t) ansi_code_keys;
+        if(code_index > ansi_code_length)
+            code_index -= ansi_code_length;
+        if(code_index > ansi_code_length)
+            continue;
+        index += characterCode.length() + 1;
+    }
 
-        switch (tolower(in[index + characterCode.length()])){
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            case 'a':
-            case 'b':
-            case 'c':
-            case 'd':
-            case 'e':
-            case 'f':
-            case 'k':
-            case 'n':
-            case 'm':
-            case 'o':
-            case 'l':
-            case 'r':
-                break;
-            default:
-                out << characterCode;
-                index -= 1;
-        }
-        oldIndex = (index + characterCode.length() + 1);
-    } while(true);
-    return out.str();
+    if(index != found_index)
+        response.append(in, index, found_index - index);
+    response.shrink_to_fit();
+    return response;
 }

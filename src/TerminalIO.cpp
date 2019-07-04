@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <sstream>
-#include <zconf.h>
 #include <cassert>
 #include <iostream>
 #include <cstring>
@@ -8,6 +7,11 @@
 #include "../include/Terminal.h"
 #ifdef USE_LIBEVENT
     #include <event2/thread.h>
+#endif
+#ifdef WIN32
+    #define STDIN_FILENO (0)
+#else
+	#include <zconf.h>
 #endif
 
 using namespace std;
@@ -46,7 +50,7 @@ int impl::startReader() {
     return 0;
 #else
     this->eventLoop = event_base_new();
-    this->readEvent = event_new(this->eventLoop, STDIN_FILENO, EV_READ | EV_PERSIST, [](int a, short b, void* c){ ((impl*) c)->handleInput(a, b, c); }, this);
+    this->readEvent = event_new(this->eventLoop, STDIN_FILENO, EV_READ | EV_PERSIST, [](evutil_socket_t a, short b, void* c){ ((impl*) c)->handleInput(a, b, c); }, this);
     event_add(readEvent, nullptr);
 
     this->readerThread = new std::thread([&](){
@@ -113,7 +117,11 @@ int impl::readNextByte() {
 #define RD_BUFFER_SIZE 1024
 void impl::handleInput(int fd, short, void *) {
     char buffer[RD_BUFFER_SIZE];
+#ifndef WIN32
     auto read = ::read(fd, buffer, RD_BUFFER_SIZE);
+#else
+    auto read = 0;
+#endif
     if(read < 0){
         stringstream ss;
         ss << ANSI_RED << "Invalid terminal read. errno: " << errno << " msg: " << strerror(errno) << endl;
@@ -207,11 +215,13 @@ bool impl::handleRead() {
             newInputTyped = true;
             if(type == 68){
                 if(_cursorPosition > 0){
+                    //this->_move_cursor(-1, 0, true);
                     this->printAnsiCommand("1D");
                     this->_cursorPosition--;
                 } else return true;
             } else if(type == 67){
                 if(_cursorPosition < this->cursorBuffer.size()) {
+                    //this->_move_cursor(1, 0, true);
                     this->printAnsiCommand("1C");
                     this->_cursorPosition++;
                 } else return true;

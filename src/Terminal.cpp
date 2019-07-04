@@ -2,13 +2,18 @@
 
 #include <sstream>
 #include <iostream>
-#include <unistd.h>
-#include <termios.h>
 #include <csignal>
 #include <algorithm>
 #include <cstring>
 #include <cassert>
 #include <fcntl.h>
+
+#ifndef WIN32
+	#include <unistd.h>
+	#include <termios.h>
+#else
+	typedef int64_t ssize_t;
+#endif
 
 using namespace std;
 using namespace std::chrono;
@@ -31,7 +36,10 @@ bool isTerminalEnabled(){
  * Terminal class
  */
 
-struct termios orig_termios;
+#ifndef WIN32
+	struct termios orig_termios;
+#endif
+
 impl* terminalInstance = nullptr;
 
 
@@ -41,13 +49,16 @@ terminal::impl* terminal::instance() {
 
 void removeNonblock(){
 #ifndef TERMINAL_NON_BLOCK
+#ifndef WIN32
     tcsetattr(0, TCSANOW, &orig_termios);
     std::cout << ANSI_RESET << flush;
+#endif
 #endif
 }
 
 void initNonblock(){
 #ifndef TERMINAL_NON_BLOCK
+#ifndef WIN32
     termios new_termios{};
 
     tcgetattr(0, &orig_termios);
@@ -62,6 +73,7 @@ void initNonblock(){
     tcsetattr(0, TCSANOW, &new_termios);
 
     atexit(removeNonblock);
+#endif
 #endif
 }
 
@@ -86,6 +98,13 @@ void terminal::uninstall() {
 bool terminal::active() {
     return terminalInstance != nullptr;
 }
+
+impl::impl() {
+	this->console_handle = GetStdHandle(STD_INPUT_HANDLE);
+    this->console_own_handle = false;
+}
+
+impl::~impl() {}
 
 void impl::printAnsiCommand(std::string command) {
     std::cout << ANSI_ESC"[" << command;
