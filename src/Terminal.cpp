@@ -100,8 +100,10 @@ bool terminal::active() {
 }
 
 impl::impl() {
+#if WIN32
 	this->console_handle = GetStdHandle(STD_INPUT_HANDLE);
     this->console_own_handle = false;
+#endif
 }
 
 impl::~impl() {}
