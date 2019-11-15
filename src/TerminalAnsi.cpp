@@ -57,7 +57,7 @@ string terminal::parseCharacterCodes(string in, std::string characterCode) {
 	        continue;
         }
         size_t code_index = (uintptr_t) key_ptr - (uintptr_t) ansi_code_keys;
-        if(code_index > ansi_code_length)
+        if(code_index >= ansi_code_length)
             code_index -= ansi_code_length;
         if(code_index > ansi_code_length) {
 	        response.append(characterCode);
